@@ -79,8 +79,92 @@ class QuantumRunner:
         num = int(mode_bitstring, 2)
         return num
 
+def test_all_angles(shots, points, batch_size):
+    import itertools
+    from collections import Counter
+
+    runner = QuantumRunner(shots=shots)
+    sim = runner.sim
+    compiled = runner.compiled
+    params = runner.parameters
+
+    values = [k * pi / 6 for k in range(points)]
+    total = points ** 6
+
+    extraordinary = []  # (angles_tuple, mode_bitstring, fraction)
+    threshold = .5
+
+    def run_batch(batch, start_idx):
+        batch_len = len(batch)
+        parameters = {p: [combo[idx] for combo in batch] for idx, p in enumerate(params)}
+
+        job = sim.run(compiled, parameter_binds=[parameters], shots=shots)
+        result = job.result()
+
+        for i in range(batch_len):
+            counts = result.get_counts(i)
+            idx = start_idx + i + 1
+
+            sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+            top1 = sorted_items[0]
+            top1_bit, top1_count = top1
+            top1_frac = top1_count / float(shots)
+
+            if len(sorted_items) > 1:
+                top2 = sorted_items[1]
+                top2_bit, top2_count = top2
+                top2_frac = top2_count / float(shots)
+            else:
+                top2_bit, top2_count = "0", 0
+                top2_frac = 0
+
+            if idx % 1000 == 0:
+                print(
+                    f"{idx}/{total}: {batch[i]} - top1 {top1_bit} ({top1_count}/{shots}={top1_frac:.2f}), top2 {top2_bit} ({top2_count}/{shots}={top2_frac:.2f})")
+
+            if top1_frac > threshold:
+                extraordinary.append((
+                    tuple(batch[i]),
+                    (top1_bit, top1_count, top1_frac),
+                    (top2_bit, top2_count, top2_frac),
+                ))
+
+    it = itertools.product(values, repeat=6)
+    batch = []
+    processed = 0
+    for combo in it:
+        batch.append(combo)
+        if len(batch) >= batch_size:
+            run_batch(batch, processed)
+            processed += len(batch)
+            batch = []
+    if batch:
+        run_batch(batch, processed)
+        processed += len(batch)
+
+    top1_counts = Counter(item[1][0] for item in extraordinary)
+    top2_counts = Counter(item[2][0] for item in extraordinary)
+
+    print("Top1 counts:")
+    for bit, count in sorted(top1_counts.items()):
+        print(f"{bit}: {count}")
+
+    print("Top2 counts:")
+    for bit, count in sorted(top2_counts.items()):
+        print(f"{bit}: {count}")
+
+    pair_counts = Counter((item[1][0], item[2][0]) for item in extraordinary)
+    print("Pair counts:")
+    for pair, count in pair_counts.most_common():
+        print(f"{pair}: {count}")
+
+    for angles, top1, top2 in extraordinary:
+        if (top1[0], top2[0]) == ("01", "11"):
+            angles_str = ", ".join(f"{a:.4f}" for a in angles)
+            print(f"{angles_str}")
+
 if __name__ == "__main__":
-    angles = (pi/2, pi/2, pi/2, pi/2, pi/2, pi/2)
+    test_all_angles(32, 10, 1024)
     # run_tests(angles)
     # runner = QuantumRunner()
     # num = runner.get_action(angles)
