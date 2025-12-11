@@ -3,13 +3,12 @@ import random
 
 
 class Creature:
-    def __init__(self, a, b):
+    def __init__(self, angles):
         self.pos = [0, 0]
         self.age = 0
         self.orientation = 0
         self.food_eaten = 0
-        self.a = a
-        self.b = b
+        self.angles = list(angles)
         self.visited_positions = []
 
     def __repr__(self):
