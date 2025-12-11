@@ -3,10 +3,14 @@ import random
 
 
 class Creature:
-    def __init__(self):
+    def __init__(self, a, b):
         self.pos = [0, 0]
         self.age = 0
         self.orientation = 0
+        self.food_eaten = 0
+        self.a = a
+        self.b = b
+        self.visited_positions = []
 
     def __repr__(self):
         return f"Creature pos={self.pos}, age={self.age}, orientation={self.orientation}"
@@ -36,7 +40,7 @@ class Environment:
         self.player = creature
         self.player.pos = [s//2, s//2]
         self.grid[s//2][s//2] = 1
-        random.seed(1)
+        random.seed(seed)
 
     def __repr__(self):
         txt = ""
@@ -75,10 +79,13 @@ class Environment:
                 x, y = new
                 if self.grid[x][y] == 2:
                     ate = True
+                    self.player.food_eaten += 1
 
                 self.grid[old[0]][old[1]] = 0
                 self.grid[x][y] = 1
                 self.player.pos = new
+                if new not in self.player.visited_positions:
+                    self.player.visited_positions.append(new)
                 moved = True
         elif action == 2:
             self.player.turn_left()
@@ -96,19 +103,3 @@ class Environment:
             "position": self.player.pos,
             "orientation": self.player.orientation
         }
-
-c = Creature()
-env = Environment(c)
-env.generate_food()
-print(repr(env))
-
-print(env.step(0))
-print(repr(env))
-print(env.player.age)
-print(env.step(3))
-print(repr(env))
-print(env.player.age)
-print(env.step(1))
-print(repr(env))
-print(env.player.age)
-
