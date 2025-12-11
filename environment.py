@@ -12,7 +12,7 @@ class Creature:
         self.visited_positions = []
 
     def __repr__(self):
-        return f"Creature pos={self.pos}, age={self.age}, orientation={self.orientation}"
+        return f"{self.angles}"
 
     def forward_pos(self):
         x, y = self.pos
@@ -30,6 +30,17 @@ class Creature:
 
     def turn_right(self):
         self.orientation = (self.orientation + 1) % 4
+
+    def reset(self):
+        self.pos = [0, 0]
+        self.age = 0
+        self.orientation = 0
+        self.food_eaten = 0
+        self.visited_positions = []
+
+    def normalize_angles(self):
+        for i in range(len(self.angles)):
+            self.angles[i] = self.angles[i] % (4*math.pi)
 
 
 class Environment:

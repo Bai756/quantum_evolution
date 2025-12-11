@@ -164,8 +164,15 @@ def test_all_angles(shots, points, batch_size):
             print(f"{angles_str}")
 
 if __name__ == "__main__":
-    test_all_angles(32, 10, 1024)
-    # run_tests(angles)
+    # test_all_angles(32, 10, 1024)
+    angles = [2.6180, 1.5708, 1.5708, 4.1888, 3.1416, 1.0472]
+    angles1 = [3.1416, 0.5236, 2.6180, 3.6652, 3.6652, 2.6180]
+    angles2 = [4.1888, 0.5236, 4.1888, 2.6180, 0.5236, 1.0472] # this one is decent 01 and even rest
+    angles3 = [0.0000, 1.0472, 3.1416, 3.6652, 0.0000, 3.6652] # perhaps, 11 high, 10 next, even 00, 01
+    angles4 = [0.5236, 1.5708, 3.1416, 2.0944, 2.0944, 1.0472]
+    angles5 = [1.0472, 0.5236, 1.0472, 3.6652, 4.1888, 3.1416]
+
+    run_tests(angles5)
     # runner = QuantumRunner()
     # num = runner.get_action(angles)
     # print("action:", num)
