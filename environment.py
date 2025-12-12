@@ -1,12 +1,13 @@
 import math
 import random
+import pygame as pg
 
 
 class Creature:
     def __init__(self, angles):
         self.pos = [0, 0]
         self.age = 0
-        self.orientation = 0
+        self.orientation = 0 # 0: up, 1: right 2: down 3: left
         self.food_eaten = 0
         self.angles = list(angles)
         self.visited_positions = []
@@ -50,15 +51,16 @@ class Environment:
         self.player = creature
         self.player.pos = [s//2, s//2]
         self.grid[s//2][s//2] = 1
-        random.seed(seed)
+        random.seed(1) # seed equals one for now, just because still haven't implemented senses
 
     def __repr__(self):
+        symbols = {0: '.', 1: 'C', 2: 'F'}
         txt = ""
         for row in self.grid:
-            for col in row:
-                txt += str(col) + " "
+            for square in row:
+                txt += symbols[square] + " "
             txt += "\n"
-        return txt[:-1]
+        return txt
 
     def in_bounds(self, pos):
         return 0 <= pos[0] < self.size and 0 <= pos[1] < self.size
@@ -113,3 +115,50 @@ class Environment:
             "position": self.player.pos,
             "orientation": self.player.orientation
         }
+
+    def render(self, screen):
+        cell_size = 40
+        WHITE = (255, 255, 255)
+        BLUE = (50, 100, 255)
+        GREEN = (50, 200, 50)
+        GRID_COLOR = (180, 180, 180)
+        TRIANGLE = (0, 0, 0)
+
+        for row in range(self.size):
+            for col in range(self.size):
+                val = self.grid[row][col]
+                if val == 0:
+                    color = WHITE
+                elif val == 1:
+                    color = BLUE
+                elif val == 2:
+                    color = GREEN
+                else:
+                    color = WHITE
+                rect = pg.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
+                pg.draw.rect(screen, color, rect)
+
+        total_px = self.size * cell_size
+        for i in range(self.size + 1):
+            x = i * cell_size
+            pg.draw.line(screen, GRID_COLOR, (x, 0), (x, total_px), 1)
+            y = i * cell_size
+            pg.draw.line(screen, GRID_COLOR, (0, y), (total_px, y), 1)
+
+        cell_x = self.player.pos[1] * cell_size + cell_size / 2.0
+        cell_y = self.player.pos[0] * cell_size + cell_size / 2.0
+
+        tri_size = cell_size * 0.35
+        h = tri_size // 2.0
+
+        if self.player.orientation == 0:
+            points = [(cell_x, cell_y - h), (cell_x - h, cell_y + h), (cell_x + h, cell_y + h)]
+        elif self.player.orientation == 1:
+            points = [(cell_x + h, cell_y), (cell_x - h, cell_y - h), (cell_x - h, cell_y + h)]
+        elif self.player.orientation == 2:
+            points = [(cell_x, cell_y + h), (cell_x - h, cell_y - h), (cell_x + h, cell_y - h)]
+        else:
+            points = [(cell_x - h, cell_y), (cell_x + h, cell_y - h), (cell_x + h, cell_y + h)]
+
+        int_points = [(x, y) for x, y in points]
+        pg.draw.polygon(screen, TRIANGLE, int_points)
