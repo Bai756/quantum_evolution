@@ -1,0 +1,6 @@
+fastapi
+pygame
+pydantic
+matplotlib
+qiskit
+qiskit-aer

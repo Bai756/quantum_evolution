@@ -145,20 +145,20 @@ class Environment:
             y = i * cell_size
             pg.draw.line(screen, GRID_COLOR, (0, y), (total_px, y), 1)
 
-        cell_x = self.player.pos[1] * cell_size + cell_size / 2.0
-        cell_y = self.player.pos[0] * cell_size + cell_size / 2.0
+        center_x = self.player.pos[1] * cell_size + cell_size / 2.0
+        center_y = self.player.pos[0] * cell_size + cell_size / 2.0
 
         tri_size = cell_size * 0.35
         h = tri_size // 2.0
 
         if self.player.orientation == 0:
-            points = [(cell_x, cell_y - h), (cell_x - h, cell_y + h), (cell_x + h, cell_y + h)]
+            points = [(center_x, center_y - h), (center_x - h, center_y + h), (center_x + h, center_y + h)]
         elif self.player.orientation == 1:
-            points = [(cell_x + h, cell_y), (cell_x - h, cell_y - h), (cell_x - h, cell_y + h)]
+            points = [(center_x + h, center_y), (center_x - h, center_y - h), (center_x - h, center_y + h)]
         elif self.player.orientation == 2:
-            points = [(cell_x, cell_y + h), (cell_x - h, cell_y - h), (cell_x + h, cell_y - h)]
+            points = [(center_x, center_y + h), (center_x - h, center_y - h), (center_x + h, center_y - h)]
         else:
-            points = [(cell_x - h, cell_y), (cell_x + h, cell_y - h), (cell_x + h, cell_y + h)]
+            points = [(center_x - h, center_y), (center_x + h, center_y - h), (center_x + h, center_y + h)]
 
         int_points = [(x, y) for x, y in points]
         pg.draw.polygon(screen, TRIANGLE, int_points)

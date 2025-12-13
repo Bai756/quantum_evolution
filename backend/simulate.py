@@ -1,5 +1,5 @@
-from environment import *
-from quantum_runner import *
+from backend.environment import *
+from backend.quantum_runner import *
 import random
 from math import pi
 
@@ -109,4 +109,4 @@ if __name__ == "__main__":
     # angles[1] and [2] work pretty well
     angles = [[0.0, 1.305084939618391, 3.1416, 3.4405219230155755, -0.05782300140385274, 3.752734189104716], [0.03378434831137653, 1.441234729740852, 3.096222841904588, 3.5313561482881033, 0.1135670575082236, 3.6652],
               [0.03378434831137653, 1.441234729740852, 3.096222841904588, 3.5313561482881033, -0.12436814333957848, 3.6652]]
-    render(angles[0])
+    # render(angles[0])
