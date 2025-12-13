@@ -1,10 +1,11 @@
+import asyncio
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from simulate import *
-from web_helpers import evolution_iter
+from web_helpers import evolution_async
 
 class CreatureSnapshot(BaseModel):
     angles: List[float]
@@ -56,7 +57,7 @@ app.add_middleware(
 
 
 @app.get("/creature", response_model=CreatureSnapshot)
-def get_creature(idx: int = 0):
+def get_creature():
     creature = Creature([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     env = Environment(creature)
     env.generate_food()
@@ -67,11 +68,55 @@ def get_creature(idx: int = 0):
 async def ws_evolution(ws: WebSocket):
     print("WebSocket connection for evolution")
     await ws.accept()
+    current_best_holder = {"creature": None, "fitness": 0.0, "generation": 0, "version": 0}
+    stop_event = asyncio.Event()
+
+    async def sim_loop():
+        last_version = -1
+        env = None
+        runner = None
+
+        try:
+            while not stop_event.is_set():
+                holder = current_best_holder
+                if holder["creature"] is None:
+                    # not started yet
+                    await asyncio.sleep(0.1)
+                    continue
+
+                if holder["version"] != last_version:
+                    print("New best creature", holder["generation"])
+                    last_version = holder["version"]
+                    # create a fresh Creature instance so we don't mutate the evolutionary one
+                    c = holder["creature"]
+                    angles = list(c.angles)
+                    fresh = Creature(angles)
+                    env = Environment(fresh)
+                    env.generate_food()
+                    runner = QuantumRunner()
+
+                action = runner.get_action(env.player.angles)
+                env.step(action)
+
+                snap = creature_to_snapshot(env.player, env, fitness=holder["fitness"], generation=holder["generation"])
+                await ws.send_json({"simulation": True, **snap.model_dump()})
+
+                await asyncio.sleep(0.5)
+                if not env.has_food():
+                    print("Simulation: all food eaten, done")
+                    stop_event.set()
+                    break
+        except asyncio.CancelledError:
+            return
+
     try:
         init = await ws.receive_json()
         params = RunParams(**init)
 
-        # stream snapshots via evolution_iter
+        # start the background simulation task
+        sim_task = asyncio.create_task(sim_loop())
+
+        # stream snapshots via evolution_async
         best_final = None
         async def send_snapshot(gen, creature, fitness):
             env = Environment(creature)
@@ -79,40 +124,54 @@ async def ws_evolution(ws: WebSocket):
             snap = creature_to_snapshot(creature, env, fitness=fitness, generation=gen)
             await ws.send_json(snap.model_dump())
 
-        for gen, best_creature, best_fitness in evolution_iter(
-            params.generations, params.children, params.chance, params.repeats, params.elites
-        ):
+        async for gen, best_creature, best_fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites):
             await send_snapshot(gen, best_creature, best_fitness)
-            best_final = (best_creature, best_fitness)
+            current_best_holder["creature"] = best_creature
+            current_best_holder["fitness"] = best_fitness
+            current_best_holder["generation"] = gen
+            current_best_holder["version"] += 1
+
+            if best_fitness > current_best_holder["fitness"]:
+                best_final = (best_creature, best_fitness)
 
         # send final best summary
-        if best_final is not None:
+        if best_final:
             creature, fitness = best_final
+            # ensure sim loop will simulate the final best
+            current_best_holder["creature"] = creature
+            current_best_holder["fitness"] = fitness
+            current_best_holder["generation"] = params.generations - 1
+            current_best_holder["version"] += 1
+
             await ws.send_json({
                 "done": False,
                 "best": {
                     "angles": list(creature.angles),
-                    "fitness": float(fitness),
+                    "fitness": fitness,
                 }
             })
-            env = Environment(Creature(creature.angles))
-            env.generate_food()
-            runner = QuantumRunner()
-            sim_creature = env.player
-            for step in range(10):
-                action = runner.get_action(sim_creature.angles)
-                env.step(action)
-                snap = creature_to_snapshot(sim_creature, env, fitness=fitness, generation=params.generations)
-                await ws.send_json({"simulation": True, **snap.model_dump()})
 
         await ws.send_json({"done": True})
+
+        # wait until client disconnects
+        try:
+            while not stop_event.is_set():
+                await ws.receive_text()
+        except WebSocketDisconnect:
+            pass
+
     except WebSocketDisconnect:
         return
     except Exception as exc:
         try:
             await ws.send_json({"error": str(exc)})
         finally:
+            stop_event.set()
             await ws.close()
+    finally:
+        # cleanup
+        stop_event.set()
+        sim_task.cancel()
 
 
 if __name__ == "__main__":

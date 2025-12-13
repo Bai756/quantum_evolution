@@ -162,3 +162,10 @@ class Environment:
 
         int_points = [(x, y) for x, y in points]
         pg.draw.polygon(screen, TRIANGLE, int_points)
+
+    def has_food(self):
+        for row in self.grid:
+            for cell in row:
+                if cell == 2:
+                    return True
+        return False

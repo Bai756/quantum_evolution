@@ -5,139 +5,143 @@ const CELL_SIZE = 40;
 const GRID_SIZE = 5;
 
 export default function CreatureCanvas({ snapshot }) {
-    const canvasReference = useRef(null);
-    const [creature, setCreature] = useState(null);
-    const [lastGen, setLastGen] = useState(null);
-    const [lastFitness, setLastFitness] = useState(null);
-    const [best, setBest] = useState(null);
+	const canvasReference = useRef(null);
+	const [creature, setCreature] = useState(null);
+	const [lastGen, setLastGen] = useState(null);
+	const [lastFitness, setLastFitness] = useState(null);
+	const [best, setBest] = useState(null);
 
-    useEffect(() => {
-        async function fetchCreature() {
-            try {
-                const response = await api.get('/creature');
-                setCreature(response.data);
-                setLastGen(response.data.generation);
-                setLastFitness(response.data.fitness);
-            } catch (error) {
-                console.error('Failed to fetch creature:', error);
-            }
-        }
-        fetchCreature();
-    }, []);
+	useEffect(() => {
+		async function fetchCreature() {
+			try {
+				const response = await api.get('/creature');
+				setCreature(response.data);
+				setLastGen(response.data.generation);
+				setLastFitness(response.data.fitness);
+			} catch (error) {
+				console.error('Failed to fetch creature:', error);
+			}
+		}
 
-    // update from external snapshot prop
-    useEffect(() => {
-        if (!snapshot) return;
-        if (snapshot.best) {
-            setBest(snapshot.best);
-        }
-        if (snapshot.angles) {
-            setCreature(snapshot);
-            setLastGen(snapshot.generation);
-            setLastFitness(snapshot.fitness);
-        }
-    }, [snapshot]);
+		fetchCreature();
+	}, []);
 
-    useEffect(() => {
-        const canvasElement = canvasReference.current;
-        if (!canvasElement || !creature) {
-            return;
-        }
+	// update from external snapshot prop
+	useEffect(() => {
+		if (!snapshot) return;
+		if (snapshot.best) {
+			setBest(snapshot.best);
+		}
+		if (snapshot.angles) {
+			setCreature(snapshot);
+			setLastGen(snapshot.generation);
+			setLastFitness(snapshot.fitness);
+		}
+	}, [snapshot]);
 
-        const drawingContext = canvasElement.getContext('2d');
-        const totalSizePx = CELL_SIZE * GRID_SIZE;
-        canvasElement.width = totalSizePx;
-        canvasElement.height = totalSizePx;
+	useEffect(() => {
+		const canvasElement = canvasReference.current;
+		if (!canvasElement || !creature) {
+			return;
+		}
 
-        drawingContext.clearRect(0, 0, totalSizePx, totalSizePx);
+		const drawingContext = canvasElement.getContext('2d');
+		const totalSizePx = CELL_SIZE * GRID_SIZE;
+		canvasElement.width = totalSizePx;
+		canvasElement.height = totalSizePx;
 
-        const gridToDraw = creature.grid;
+		drawingContext.clearRect(0, 0, totalSizePx, totalSizePx);
 
-        const COLOR_EMPTY = '#ffffff';
-        const COLOR_CREATURE = '#3264ff';
-        const COLOR_FOOD = '#32c832';
-        const GRID_LINE_COLOR = '#b4b4b4';
-        const TRIANGLE_COLOR = '#000000';
+		const gridToDraw = creature.grid;
 
-        for (let row = 0; row < GRID_SIZE; row++) {
-            for (let col = 0; col < GRID_SIZE; col++) {
-                const value = gridToDraw[row][col];
-                let fill = COLOR_EMPTY;
-                if (value === 1) {
-                    fill = COLOR_CREATURE;
-                } else if (value === 2) {
-                    fill = COLOR_FOOD;
-                }
-                drawingContext.fillStyle = fill;
-                drawingContext.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-            }
-        }
+		const COLOR_EMPTY = '#ffffff';
+		const COLOR_CREATURE = '#3264ff';
+		const COLOR_FOOD = '#32c832';
+		const GRID_LINE_COLOR = '#b4b4b4';
+		const TRIANGLE_COLOR = '#000000';
 
-        // draw grid lines
-        drawingContext.strokeStyle = GRID_LINE_COLOR;
-        drawingContext.lineWidth = 1;
-        for (let i = 0; i <= GRID_SIZE; i++) {
-            const position = i * CELL_SIZE + 0.5;
-            drawingContext.beginPath();
-            drawingContext.moveTo(position, 0);
-            drawingContext.lineTo(position, totalSizePx);
-            drawingContext.stroke();
+		for (let row = 0; row < GRID_SIZE; row++) {
+			for (let col = 0; col < GRID_SIZE; col++) {
+				const value = gridToDraw[row][col];
+				let fill = COLOR_EMPTY;
+				if (value === 1) {
+					fill = COLOR_CREATURE;
+				} else if (value === 2) {
+					fill = COLOR_FOOD;
+				}
+				drawingContext.fillStyle = fill;
+				drawingContext.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+			}
+		}
 
-            drawingContext.beginPath();
-            drawingContext.moveTo(0, position);
-            drawingContext.lineTo(totalSizePx, position);
-            drawingContext.stroke();
-        }
+		// draw grid lines
+		drawingContext.strokeStyle = GRID_LINE_COLOR;
+		drawingContext.lineWidth = 1;
+		for (let i = 0; i <= GRID_SIZE; i++) {
+			const position = i * CELL_SIZE + 0.5;
+			drawingContext.beginPath();
+			drawingContext.moveTo(position, 0);
+			drawingContext.lineTo(position, totalSizePx);
+			drawingContext.stroke();
 
-        const playerPosition = Array.isArray(creature.pos)
-            ? creature.pos
-            : [Math.floor(GRID_SIZE / 2), Math.floor(GRID_SIZE / 2)];
-        const row = playerPosition[0];
-        const col = playerPosition[1];
-        const orientation = creature.orientation;
+			drawingContext.beginPath();
+			drawingContext.moveTo(0, position);
+			drawingContext.lineTo(totalSizePx, position);
+			drawingContext.stroke();
+		}
 
-        const centerX = col * CELL_SIZE + CELL_SIZE / 2;
-        const centerY = row * CELL_SIZE + CELL_SIZE / 2;
-        const triSize = CELL_SIZE * 0.35;
-        const half = triSize / 2;
+		const playerPosition = Array.isArray(creature.pos)
+			? creature.pos
+			: [Math.floor(GRID_SIZE / 2), Math.floor(GRID_SIZE / 2)];
+		const row = playerPosition[0];
+		const col = playerPosition[1];
+		const orientation = creature.orientation;
 
-        let points;
-        if (orientation === 0) {
-            points = [
-                [centerX, centerY - half],
-                [centerX - half, centerY + half],
-                [centerX + half, centerY + half],
-            ];
-        } else if (orientation === 1) {
-            points = [
-                [centerX + half, centerY],
-                [centerX - half, centerY - half],
-                [centerX - half, centerY + half],
-            ];
-        } else if (orientation === 2) {
-            points = [
-                [centerX, centerY + half],
-                [centerX - half, centerY - half],
-                [centerX + half, centerY - half],
-            ];
-        } else {
-            points = [
-                [centerX - half, centerY],
-                [centerX + half, centerY - half],
-                [centerX + half, centerY + half],
-            ];
-        }
+		const centerX = col * CELL_SIZE + CELL_SIZE / 2;
+		const centerY = row * CELL_SIZE + CELL_SIZE / 2;
+		const triSize = CELL_SIZE * 0.35;
+		const half = triSize / 2;
 
-        drawingContext.fillStyle = TRIANGLE_COLOR;
-        drawingContext.beginPath();
-        drawingContext.moveTo(points[0][0], points[0][1]);
-        drawingContext.lineTo(points[1][0], points[1][1]);
-        drawingContext.lineTo(points[2][0], points[2][1]);
-        drawingContext.closePath();
-        drawingContext.fill();
-    }, [creature]);
+		let points;
+		if (orientation === 0) {
+			points = [
+				[centerX, centerY - half],
+				[centerX - half, centerY + half],
+				[centerX + half, centerY + half],
+			];
+		} else if (orientation === 1) {
+			points = [
+				[centerX + half, centerY],
+				[centerX - half, centerY - half],
+				[centerX - half, centerY + half],
+			];
+		} else if (orientation === 2) {
+			points = [
+				[centerX, centerY + half],
+				[centerX - half, centerY - half],
+				[centerX + half, centerY - half],
+			];
+		} else {
+			points = [
+				[centerX - half, centerY],
+				[centerX + half, centerY - half],
+				[centerX + half, centerY + half],
+			];
+		}
 
-    const bestAnglesText = best.angles.map((a) => Number(a).toFixed(3)).join(', ');
+		drawingContext.fillStyle = TRIANGLE_COLOR;
+		drawingContext.beginPath();
+		drawingContext.moveTo(points[0][0], points[0][1]);
+		drawingContext.lineTo(points[1][0], points[1][1]);
+		drawingContext.lineTo(points[2][0], points[2][1]);
+		drawingContext.closePath();
+		drawingContext.fill();
+	}, [creature]);
+
+	let bestAnglesText = '';
+	if (best) {
+		bestAnglesText = best.angles.map((a) => Number(a).toFixed(3)).join(', ');
+	}
 
     return (
         <div>
