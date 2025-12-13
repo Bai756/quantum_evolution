@@ -51,7 +51,7 @@ class Environment:
         self.player = creature
         self.player.pos = [s//2, s//2]
         self.grid[s//2][s//2] = 1
-        random.seed(1) # seed equals one for now, just because still haven't implemented senses
+        random.seed(seed)
 
     def __repr__(self):
         symbols = {0: '.', 1: 'C', 2: 'F'}
@@ -169,3 +169,30 @@ class Environment:
                 if cell == 2:
                     return True
         return False
+
+    def get_local_sight(self):
+        row, col = self.player.pos
+        # orientation: 0 up, 1 right, 2 down, 3 left
+        if self.player.orientation == 0:
+            directions = [(-1, 0), (0, -1), (0, 1)]
+        elif self.player.orientation == 1:
+            directions = [(0, 1), (-1, 0), (1, 0)]
+        elif self.player.orientation == 2:
+            directions = [(1, 0), (0, 1), (0, -1)]
+        else:
+            directions = [(0, -1), (1, 0), (-1, 0)]
+
+        senses = []
+        for dr, dc in directions:
+            r = row + dr
+            c = col + dc
+            if not self.in_bounds((r, c)):
+                senses.append(2)
+            else:
+                cell = self.grid[r][c]
+                if cell == 2:
+                    senses.append(1)
+                else:
+                    senses.append(0)
+
+        return tuple(senses) # front, left, right
