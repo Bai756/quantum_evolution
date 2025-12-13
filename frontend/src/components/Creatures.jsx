@@ -106,7 +106,6 @@ export default function CreatureCanvas() {
 
   return (
     <div>
-      <h2>Creature Grid</h2>
       <canvas
         ref={canvasReference}
         style={{ border: '1px solid #dddddd', display: 'block' }}

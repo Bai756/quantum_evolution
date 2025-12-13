@@ -1,5 +1,5 @@
-from backend.environment import *
-from backend.quantum_runner import *
+from environment import *
+from quantum_runner import *
 import random
 from math import pi
 
@@ -63,7 +63,7 @@ def evolution(generations, children, chance, repeats, elites):
         cand_with_fit.sort(key=lambda x: x[1], reverse=True)
 
         if i % 5 == 0 or i == generations - 1:
-            print(f"gen {i}: best fitness {cand_with_fit[0][1]:.1f}, 2nd {cand_with_fit[1][1]:.1f}")
+            print(f"gen {i}: best fitness {cand_with_fit[0][1]:.1f}, 2nd {cand_with_fit[1][1]:.1f}, 3rd {cand_with_fit[2][1]:.1f}")
 
         next_parents = [cand_with_fit[j][0] for j in range(min(elites, len(population)))]
 
@@ -75,6 +75,10 @@ def evolution(generations, children, chance, repeats, elites):
     print("Final parents:")
     for p in parents:
         print(p)
+
+    # return the angles of the final parents
+    return [list(p.angles) for p in parents]
+
 
 def render(angles):
     pg.init()
