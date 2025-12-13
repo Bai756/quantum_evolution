@@ -4,15 +4,20 @@ import api from '../api';
 const CELL_SIZE = 40;
 const GRID_SIZE = 5;
 
-export default function CreatureCanvas() {
+export default function CreatureCanvas({ snapshot }) {
   const canvasReference = useRef(null);
   const [creature, setCreature] = useState(null);
+  const [lastGen, setLastGen] = useState(null);
+  const [lastFitness, setLastFitness] = useState(null);
+  const [best, setBest] = useState(null);
 
   useEffect(() => {
     async function fetchCreature() {
       try {
         const response = await api.get('/creature');
         setCreature(response.data);
+        setLastGen(response.data.generation);
+        setLastFitness(response.data.fitness);
       } catch (error) {
         console.error('Failed to fetch creature:', error);
       }
@@ -20,9 +25,22 @@ export default function CreatureCanvas() {
     fetchCreature();
   }, []);
 
+  // update from external snapshot prop
+  useEffect(() => {
+    if (!snapshot) return;
+    if (snapshot.best) {
+      setBest(snapshot.best);
+    }
+    if (snapshot.angles) {
+      setCreature(snapshot);
+      setLastGen(snapshot.generation ?? null);
+      setLastFitness(typeof snapshot.fitness === 'number' ? snapshot.fitness : null);
+    }
+  }, [snapshot]);
+
   useEffect(() => {
     const canvasElement = canvasReference.current;
-    if (!canvasElement) {
+    if (!canvasElement || !creature) {
       return;
     }
 
@@ -72,40 +90,50 @@ export default function CreatureCanvas() {
       drawingContext.stroke();
     }
 
-    if (creature) {
-      const playerPosition = Array.isArray(creature.pos) ? creature.pos : [Math.floor(GRID_SIZE / 2), Math.floor(GRID_SIZE / 2)];
-      const row = playerPosition[0];
-      const col = playerPosition[1];
-      const orientation = typeof creature.orientation === 'number' ? creature.orientation : 0;
+    const playerPosition = Array.isArray(creature.pos) ? creature.pos : [Math.floor(GRID_SIZE / 2), Math.floor(GRID_SIZE / 2)];
+    const row = playerPosition[0];
+    const col = playerPosition[1];
+    const orientation = typeof creature.orientation === 'number' ? creature.orientation : 0;
 
-      const centerX = col * CELL_SIZE + CELL_SIZE / 2;
-      const centerY = row * CELL_SIZE + CELL_SIZE / 2;
-      const triSize = CELL_SIZE * 0.35;
-      const half = triSize / 2;
+    const centerX = col * CELL_SIZE + CELL_SIZE / 2;
+    const centerY = row * CELL_SIZE + CELL_SIZE / 2;
+    const triSize = CELL_SIZE * 0.35;
+    const half = triSize / 2;
 
-      let points;
-      if (orientation === 0) {
-        points = [[centerX, centerY - half], [centerX - half, centerY + half], [centerX + half, centerY + half]];
-      } else if (orientation === 1) {
-        points = [[centerX + half, centerY], [centerX - half, centerY - half], [centerX - half, centerY + half]];
-      } else if (orientation === 2) {
-        points = [[centerX, centerY + half], [centerX - half, centerY - half], [centerX + half, centerY - half]];
-      } else {
-        points = [[centerX - half, centerY], [centerX + half, centerY - half], [centerX + half, centerY + half]];
-      }
-
-      drawingContext.fillStyle = TRIANGLE_COLOR;
-      drawingContext.beginPath();
-      drawingContext.moveTo(points[0][0], points[0][1]);
-      drawingContext.lineTo(points[1][0], points[1][1]);
-      drawingContext.lineTo(points[2][0], points[2][1]);
-      drawingContext.closePath();
-      drawingContext.fill();
+    let points;
+    if (orientation === 0) {
+      points = [[centerX, centerY - half], [centerX - half, centerY + half], [centerX + half, centerY + half]];
+    } else if (orientation === 1) {
+      points = [[centerX + half, centerY], [centerX - half, centerY - half], [centerX - half, centerY + half]];
+    } else if (orientation === 2) {
+      points = [[centerX, centerY + half], [centerX - half, centerY - half], [centerX + half, centerY - half]];
+    } else {
+      points = [[centerX - half, centerY], [centerX + half, centerY - half], [centerX + half, centerY + half]];
     }
+
+    drawingContext.fillStyle = TRIANGLE_COLOR;
+    drawingContext.beginPath();
+    drawingContext.moveTo(points[0][0], points[0][1]);
+    drawingContext.lineTo(points[1][0], points[1][1]);
+    drawingContext.lineTo(points[2][0], points[2][1]);
+    drawingContext.closePath();
+    drawingContext.fill();
   }, [creature]);
 
   return (
     <div>
+      <div style={{ marginBottom: 8 }}>
+        {lastGen !== null && (
+          <div>Gen {lastGen} | Fitness {lastFitness.toFixed(1)}</div>
+        )}
+        {best && (
+          <div style={{ marginTop: 8 }}>
+            <strong>Final Best:</strong> Fitness {best.fitness.toFixed(1)}
+            <br />
+            Angles: {Array.isArray(best.angles.map(a.toFixed(3)).join(', '))}
+          </div>
+        )}
+      </div>
       <canvas
         ref={canvasReference}
         style={{ border: '1px solid #dddddd', display: 'block' }}

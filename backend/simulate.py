@@ -1,7 +1,6 @@
 from environment import *
 from quantum_runner import *
 import random
-from math import pi
 
 
 def simulate(c, runner, seed=None, steps=20):
@@ -47,7 +46,7 @@ def evolution(generations, children, chance, repeats, elites):
     parents = [Creature([0.0000, 1.0472, 3.1416, 3.6652, 0.0000, 3.6652]),
                Creature([4.1888, 0.5236, 4.1888, 2.6180, 0.5236, 1.0472])]
 
-    for i in range(generations):
+    for gen in range(generations):
         population = []
 
         for j in range(len(parents)):
@@ -62,8 +61,8 @@ def evolution(generations, children, chance, repeats, elites):
 
         cand_with_fit.sort(key=lambda x: x[1], reverse=True)
 
-        if i % 5 == 0 or i == generations - 1:
-            print(f"gen {i}: best fitness {cand_with_fit[0][1]:.1f}, 2nd {cand_with_fit[1][1]:.1f}, 3rd {cand_with_fit[2][1]:.1f}")
+        if gen % 5 == 0 or gen == generations - 1:
+            print(f"gen {gen}: best fitness {cand_with_fit[0][1]:.1f}, 2nd {cand_with_fit[1][1]:.1f}, 3rd {cand_with_fit[2][1]:.1f}")
 
         next_parents = [cand_with_fit[j][0] for j in range(min(elites, len(population)))]
 

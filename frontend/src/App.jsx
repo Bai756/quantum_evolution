@@ -4,6 +4,14 @@ import CreatureList from './components/Creatures.jsx';
 import EvolutionControls from './components/EvolutionControls.jsx';
 
 const App = () => {
+  const [snapshot, setSnapshot] = useState(null);
+
+  function handleSnapshot(msg) {
+    setSnapshot(msg);
+  }
+  function handleBest(best) {
+    setSnapshot({ best });
+  }
 
   return (
     <div className="App">
@@ -13,10 +21,10 @@ const App = () => {
       <main>
         <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', justifyContent: 'center' }}>
           <div style={{ width: 360 }}>
-            <EvolutionControls/>
+            <EvolutionControls onSnapshot={handleSnapshot} onBest={handleBest}/>
           </div>
           <div>
-            <CreatureList />
+            <CreatureList snapshot={snapshot} />
           </div>
         </div>
       </main>
