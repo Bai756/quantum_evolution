@@ -3,6 +3,7 @@ from qiskit.circuit import Parameter
 from qiskit_aer import AerSimulator
 import matplotlib.pyplot as plt
 from math import pi
+from collections import Counter
 
 
 def run_tests(angles):
@@ -42,17 +43,10 @@ class QuantumRunner:
         self.shots = shots
         self.sim = AerSimulator()
 
-        # trainable parameters: 2 layers * 5 qubits * (RY,RZ) = 20
+        # trainable parameters - 20 angles
         self.parameters = [Parameter(f"theta_{i}") for i in range(20)]
-        # vision parameters for front, left, right
-        self.vision_parameters = [Parameter("v_front"), Parameter("v_left"), Parameter("v_right")]
 
         qc = QuantumCircuit(5, 2)
-
-        # Encode vision on input qubits q0, q1, q2
-        qc.ry(self.vision_parameters[0], 0)
-        qc.ry(self.vision_parameters[1], 1)
-        qc.ry(self.vision_parameters[2], 2)
 
         # Two-layer parametrized circuit over all 5 qubits
         # basically what this is doing is that it's applying RY and RZ rotations
@@ -80,51 +74,58 @@ class QuantumRunner:
         # Measure only the action qubits q3, q4
         qc.measure([3, 4], [0, 1])
 
+        self.qc_template = qc
         self.compiled = transpile(qc, self.sim)
 
-    def _encode_vision_angles(self, vision):
-        # turns vision (0,1,2) into angles (-pi/3,0,pi/3)
-        v_scale = pi / 3.0
+    def _prepare_vision(self, qc, vision):
+        # encodes vision as a basis state to make it strongly influence the circuit
+        # perhaps make the vision correspond to the action qubits, that way if it's front, it will go forward ???
         front, left, right = vision
-        encoded = []
-        for s in (front, left, right):
-            code = int(s) - 1
-            encoded.append(code * v_scale)
-        return encoded
+        for s, q in zip((front, left, right), (0, 1, 2)):
+            # empty - |0>
+            if s == 0:
+                continue
+            # food - |1>
+            if s == 1:
+                qc.x(q)
+            # wall - |+>
+            elif s == 2:
+                qc.h(q)
 
     def get_action(self, angles, vision):
         if len(angles) < len(self.parameters):
             raise ValueError(f"Expected at least {len(self.parameters)} angles, got {len(angles)}")
 
-        v_front, v_left, v_right = self._encode_vision_angles(vision)
+        param_bind = {self.parameters[i]: [angles[i]] for i in range(len(self.parameters))}
 
-        param_bind = {
-            # trainable angles
-            **{self.parameters[i]: [angles[i]] for i in range(len(self.parameters))},
-            self.vision_parameters[0]: [v_front],
-            self.vision_parameters[1]: [v_left],
-            self.vision_parameters[2]: [v_right],
-        }
+        # create the circuit
+        vision_qc = QuantumCircuit(5, 2)
+        self._prepare_vision(vision_qc, vision)
+        full_qc = vision_qc.compose(self.qc_template, inplace=False)
+        compiled = transpile(full_qc, self.sim)
 
-        job = self.sim.run(self.compiled, parameter_binds=[param_bind], shots=self.shots)
+        job = self.sim.run(compiled, parameter_binds=[param_bind], shots=self.shots)
         result = job.result()
         counts = result.get_counts()
 
-        sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-        mode_bitstring, _ = sorted_items[0]
+        # Compute expected action value from the distribution
+        total_shots = sum(counts.values()) or 1
+        p00 = counts.get("00", 0) / total_shots
+        p01 = counts.get("01", 0) / total_shots
+        p10 = counts.get("10", 0) / total_shots
+        p11 = counts.get("11", 0) / total_shots
 
-        mapping = {
-            "00": 0,
-            "01": 1,
-            "10": 2,
-            "11": 3,
-        }
-        return mapping.get(mode_bitstring, 0)
+        expected = p00 * 0 + p01 * 1 + p10 * 2 + p11 * 3
+        action = int(round(expected))
+        if action < 0:
+            action = 0
+        elif action > 3:
+            action = 3
+        return action
 
 
 def test_all_angles(shots, points, batch_size):
     import itertools
-    from collections import Counter
 
     runner = QuantumRunner(shots=shots)
     sim = runner.sim
@@ -209,7 +210,8 @@ def test_all_angles(shots, points, batch_size):
 
 if __name__ == "__main__":
     angles = [0.0] * 20
-    runner = QuantumRunner()
-    # print(runner.compiled)
-    action = runner.get_action(angles, vision=(0, 0, 0))
-    print("action:", action)
+    runner = QuantumRunner(shots=128)
+
+    for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0)]:
+        actions = [runner.get_action(angles, vision) for _ in range(50)]
+        print(f"{vision} -", Counter(actions))
