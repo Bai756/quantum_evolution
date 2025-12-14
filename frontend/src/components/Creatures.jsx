@@ -10,29 +10,39 @@ export default function CreatureCanvas({ snapshot }) {
 	const [lastGen, setLastGen] = useState(null);
 	const [lastFitness, setLastFitness] = useState(null);
 	const [best, setBest] = useState(null);
+	const initializedRef = useRef(false);
 
 	useEffect(() => {
-		async function fetchCreature() {
+		// Only run this once on start
+		if (initializedRef.current) {
+			return;
+		}
+		initializedRef.current = true;
+
+		async function fetchInitialCreature() {
 			try {
-				const response = await api.get('/creature');
-				setCreature(response.data);
-				setLastGen(response.data.generation);
-				setLastFitness(response.data.fitness);
-			} catch (error) {
-				console.error('Failed to fetch creature:', error);
+				const res = await api.get('/creature');
+				const data = res.data;
+				setCreature((prev) => prev ?? data);
+				setLastGen(data.generation);
+				setLastFitness(data.fitness);
+			} catch (err) {
+				console.error('Failed to fetch initial creature:', err);
 			}
 		}
 
-		fetchCreature();
+		fetchInitialCreature();
 	}, []);
 
-	// update from external snapshot prop
+	// Handle incoming snapshots from the ws
 	useEffect(() => {
-		if (!snapshot) return;
+		if (!snapshot) {
+			return;
+		}
 		if (snapshot.best) {
 			setBest(snapshot.best);
 		}
-		if (snapshot.angles) {
+		if (snapshot.angles && snapshot.grid) {
 			setCreature(snapshot);
 			setLastGen(snapshot.generation);
 			setLastFitness(snapshot.fitness);
@@ -138,34 +148,30 @@ export default function CreatureCanvas({ snapshot }) {
 		drawingContext.fill();
 	}, [creature]);
 
-	let bestAnglesText = '';
-	if (best) {
-		bestAnglesText = best.angles.map((a) => Number(a).toFixed(3)).join(', ');
+	let bestFitnessText = '';
+	if (best && typeof best.fitness === 'number') {
+		bestFitnessText = best.fitness.toFixed(1);
 	}
 
-    return (
-        <div>
-            <div style={{ marginBottom: 8 }}>
-                {lastGen !== null && (
-                    <div>
-                        Gen {lastGen} | Fitness{' '}
-                        {lastFitness.toFixed(1)}
-                    </div>
-                )}
-                {best && (
-                    <div style={{ marginTop: 8 }}>
-                        <strong>Final Best:</strong> Fitness{' '}
-                        {best.fitness.toFixed(1)}
-                        <br />
-                        Angles: {bestAnglesText}
-                    </div>
-                )}
-            </div>
-            <canvas
-                ref={canvasReference}
-                style={{ border: '1px solid #dddddd', display: 'block' }}
-                aria-label="Creature grid"
-            />
-        </div>
-    );
+	return (
+		<div>
+			<div style={{ marginBottom: 8 }}>
+				{lastGen !== null && lastFitness !== null && (
+					<div>
+						Gen {lastGen} | Fitness {lastFitness.toFixed(1)}
+					</div>
+				)}
+				{best && (
+					<div style={{ marginTop: 8 }}>
+						Best: Fitness {bestFitnessText}
+					</div>
+				)}
+			</div>
+			<canvas
+				ref={canvasReference}
+				style={{ border: '1px solid #dddddd', display: 'block' }}
+				aria-label="Creature grid"
+			/>
+		</div>
+	);
 }

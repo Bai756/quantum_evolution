@@ -1,12 +1,14 @@
 import asyncio
+import random
+from math import pi
 from simulate import Creature, QuantumRunner, mutate, evaluate_average
 
 async def evolution_async(generations, children, chance, repeats, elites):
     runner = QuantumRunner()
-    parents = [
-        Creature([0.0000, 1.0472, 3.1416, 3.6652, 0.0000, 3.6652]),
-        Creature([4.1888, 0.5236, 4.1888, 2.6180, 0.5236, 1.0472]),
-    ]
+
+    base_angles1 = [random.uniform(-12 * pi, 12 * pi) for _ in range(len(runner.parameters))]
+    base_angles2 = [random.uniform(-12 * pi, 12 * pi) for _ in range(len(runner.parameters))]
+    parents = [Creature(base_angles1), Creature(base_angles2)]
 
     for gen in range(generations):
         population = []
@@ -24,8 +26,7 @@ async def evolution_async(generations, children, chance, repeats, elites):
 
         cand_with_fit.sort(key=lambda x: x[1], reverse=True)
 
-        if gen % 5 == 0 or gen == generations - 1:
+        if gen % 1 == 0 or gen == generations - 1:
             yield gen, cand_with_fit[0][0], cand_with_fit[0][1]
 
-        next_parents = [cand_with_fit[j][0] for j in range(min(elites, len(cand_with_fit)))]
-        parents = [Creature(p.angles) for p in next_parents]
+        parents = [cand_with_fit[j][0] for j in range(min(elites, len(cand_with_fit)))]

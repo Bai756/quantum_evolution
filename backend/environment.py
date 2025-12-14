@@ -45,13 +45,16 @@ class Creature:
 
 
 class Environment:
-    def __init__(self, creature, s=5, seed=1):
+    def __init__(self, creature, s=5, seed=None):
         self.size = s
         self.grid = [[0] * self.size for i in range(self.size)]
         self.player = creature
         self.player.pos = [s//2, s//2]
         self.grid[s//2][s//2] = 1
-        random.seed(seed)
+        if seed:
+            random.seed(seed)
+        else:
+            random.seed()
 
     def __repr__(self):
         symbols = {0: '.', 1: 'C', 2: 'F'}
