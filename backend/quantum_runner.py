@@ -36,48 +36,91 @@ def run_tests(angles):
     plt.bar(labels, values)
     plt.show()
 
+
 class QuantumRunner:
-    def __init__(self, shots=16):
+    def __init__(self, shots=32):
         self.shots = shots
         self.sim = AerSimulator()
-        parameters = [Parameter("a0"), Parameter("a1"), Parameter("a2"), Parameter("a3"), Parameter("a4"), Parameter("a5")]
-        qc = QuantumCircuit(4, 2)
-        qc.rx(parameters[0], 0)
-        qc.ry(parameters[1], 1)
-        qc.rz(parameters[2], 2)
-        qc.ry(parameters[3], 3)
 
-        qc.cx(0, 2)
+        # trainable parameters: 2 layers * 5 qubits * (RY,RZ) = 20
+        self.parameters = [Parameter(f"theta_{i}") for i in range(20)]
+        # vision parameters for front, left, right
+        self.vision_parameters = [Parameter("v_front"), Parameter("v_left"), Parameter("v_right")]
+
+        qc = QuantumCircuit(5, 2)
+
+        # Encode vision on input qubits q0, q1, q2
+        qc.ry(self.vision_parameters[0], 0)
+        qc.ry(self.vision_parameters[1], 1)
+        qc.ry(self.vision_parameters[2], 2)
+
+        # Two-layer parametrized circuit over all 5 qubits
+        # basically what this is doing is that it's applying RY and RZ rotations
+        # to each of the 5 qubits in order and then repeating
+        offset = 0
+        for q in range(5):
+            qc.ry(self.parameters[offset + q], q)
+        offset += 5
+        for q in range(5):
+            qc.rz(self.parameters[offset + q], q)
+        offset += 5
+
+        # Entangling
+        qc.cx(0, 3)
         qc.cx(1, 3)
-        qc.cx(2, 3)
-        qc.cx(3, 0)
+        qc.cx(2, 4)
+        qc.cx(3, 4)
 
-        qc.cry(parameters[4], 2, 0)
-        qc.crx(parameters[5], 3, 1)
+        for q in range(5):
+            qc.ry(self.parameters[offset + q], q)
+        offset += 5
+        for q in range(5):
+            qc.rz(self.parameters[offset + q], q)
 
-        qc.measure([0, 1], [0, 1])
+        # Measure only the action qubits q3, q4
+        qc.measure([3, 4], [0, 1])
+
         self.compiled = transpile(qc, self.sim)
-        self.parameters = parameters
 
-    def get_action(self, angles):
+    def _encode_vision_angles(self, vision):
+        # turns vision (0,1,2) into angles (-pi/3,0,pi/3)
+        v_scale = pi / 3.0
+        front, left, right = vision
+        encoded = []
+        for s in (front, left, right):
+            code = int(s) - 1
+            encoded.append(code * v_scale)
+        return encoded
+
+    def get_action(self, angles, vision):
+        if len(angles) < len(self.parameters):
+            raise ValueError(f"Expected at least {len(self.parameters)} angles, got {len(angles)}")
+
+        v_front, v_left, v_right = self._encode_vision_angles(vision)
+
         param_bind = {
-            self.parameters[0]: [angles[0]],
-            self.parameters[1]: [angles[1]],
-            self.parameters[2]: [angles[2]],
-            self.parameters[3]: [angles[3]],
-            self.parameters[4]: [angles[4]],
-            self.parameters[5]: [angles[5]],
+            # trainable angles
+            **{self.parameters[i]: [angles[i]] for i in range(len(self.parameters))},
+            self.vision_parameters[0]: [v_front],
+            self.vision_parameters[1]: [v_left],
+            self.vision_parameters[2]: [v_right],
         }
 
         job = self.sim.run(self.compiled, parameter_binds=[param_bind], shots=self.shots)
-
         result = job.result()
         counts = result.get_counts()
+
         sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-        # print(sorted_items)
-        mode_bitstring, mode_count = sorted_items[0]
-        num = int(mode_bitstring, 2)
-        return num
+        mode_bitstring, _ = sorted_items[0]
+
+        mapping = {
+            "00": 0,
+            "01": 1,
+            "10": 2,
+            "11": 3,
+        }
+        return mapping.get(mode_bitstring, 0)
+
 
 def test_all_angles(shots, points, batch_size):
     import itertools
@@ -89,7 +132,7 @@ def test_all_angles(shots, points, batch_size):
     params = runner.parameters
 
     values = [k * pi / 6 for k in range(points)]
-    total = points ** 6
+    total = points ** len(params)
 
     extraordinary = []  # (angles_tuple, mode_bitstring, fraction)
     threshold = .5
@@ -129,7 +172,7 @@ def test_all_angles(shots, points, batch_size):
                     (top2_bit, top2_count, top2_frac),
                 ))
 
-    it = itertools.product(values, repeat=6)
+    it = itertools.product(values, repeat=len(params))
     batch = []
     processed = 0
     for combo in it:
@@ -163,16 +206,10 @@ def test_all_angles(shots, points, batch_size):
             angles_str = ", ".join(f"{a:.4f}" for a in angles)
             print(f"{angles_str}")
 
-if __name__ == "__main__":
-    # test_all_angles(32, 10, 1024)
-    angles = [2.6180, 1.5708, 1.5708, 4.1888, 3.1416, 1.0472]
-    angles1 = [3.1416, 0.5236, 2.6180, 3.6652, 3.6652, 2.6180]
-    angles2 = [4.1888, 0.5236, 4.1888, 2.6180, 0.5236, 1.0472] # this one is decent 01 and even rest
-    angles3 = [0.0000, 1.0472, 3.1416, 3.6652, 0.0000, 3.6652] # perhaps, 11 high, 10 next, even 00, 01
-    angles4 = [0.5236, 1.5708, 3.1416, 2.0944, 2.0944, 1.0472]
-    angles5 = [1.0472, 0.5236, 1.0472, 3.6652, 4.1888, 3.1416]
 
-    run_tests(angles5)
-    # runner = QuantumRunner()
-    # num = runner.get_action(angles)
-    # print("action:", num)
+if __name__ == "__main__":
+    angles = [0.0] * 20
+    runner = QuantumRunner()
+    # print(runner.compiled)
+    action = runner.get_action(angles, vision=(0, 0, 0))
+    print("action:", action)
