@@ -110,10 +110,9 @@ class QuantumRunner:
             # food - |1>
             if s == 1:
                 qc.x(q)
-            # wall - |->
+            # wall - |+>
             elif s == 2:
-                qc.x(q)
-                qc.h(q)
+                qc.z(q)
 
     def get_action(self, angles, vision):
         if len(angles) < len(self.parameters):
@@ -234,6 +233,6 @@ if __name__ == "__main__":
     angles = [random.uniform(-12*pi, 12*pi) for _ in range(20)]
     runner = QuantumRunner()
 
-    for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0)]:
+    for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (2, 2, 2)]:
         actions = [runner.get_action(angles, vision) for _ in range(100)]
         print(f"{vision} -", Counter(actions))

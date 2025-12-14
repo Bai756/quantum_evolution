@@ -20,7 +20,7 @@ def simulate(c, runner, seed=None, steps=10):
 
     fitness = c.food_eaten * 100 + len(c.visited_positions)
     if c.food_eaten >= total_food:
-        fitness += 10000
+        fitness += 1000
     c.reset()
     return c, fitness
 
@@ -48,9 +48,10 @@ def evolution(generations, children, chance, repeats, elites):
     runner = QuantumRunner()
 
     # random start
-    base_angles1 = [random.uniform(-12*pi, 12*pi) for _ in range(len(runner.parameters))]
-    base_angles2 = [random.uniform(-12*pi, 12*pi) for _ in range(len(runner.parameters))]
-    parents = [Creature(base_angles1), Creature(base_angles2)]
+    parents = []
+    for _ in range(elites):
+        angles = [random.uniform(-12*pi, 12*pi) for _ in range(len(runner.parameters))]
+        parents.append(Creature(angles))
 
     for gen in range(generations):
         population = []
@@ -67,7 +68,7 @@ def evolution(generations, children, chance, repeats, elites):
 
         cand_with_fit.sort(key=lambda x: x[1], reverse=True)
 
-        if gen % 3 == 0 or gen == generations - 1:
+        if gen % 5 == 0 or gen == generations - 1:
             print(f"gen {gen}: best fitness {cand_with_fit[0][1]:.1f}, 2nd {cand_with_fit[1][1]:.1f}, 3rd {cand_with_fit[2][1]:.1f}")
 
         parents = [cand_with_fit[j][0] for j in range(min(elites, len(population)))]
@@ -112,7 +113,7 @@ def render(angles):
 
 
 if __name__ == "__main__":
-    # evolution(15, 5, 0.2, 3, 2)
+    # evolution(20, 10, 0.2, 3, 5)
 
-    angles = [-30.274454212294827, 8.414511418586567, 8.21096041735025, 16.08716283072674, -16.314242638467505, -37.179142640809246, 5.634025867808205, -10.280269078015543, 5.5376183121342635, -9.718794679762393, -23.65740092917654, 8.820058524802729, -16.907657634478973, 17.13520640001687, -14.751562708585256, -21.315128500286516, 1.3428858105059192, 30.62160127276838, 18.15203707467006, 26.894921910406296]
+    angles = [-1.6693521832141784, -23.233558650357452, -19.54490844846371, -16.773701557863955, 14.599376759848614, 27.539046950048235, 22.864824105649273, 16.36237352476896, 28.46262592959011, -7.548503311753133, -24.489231989617902, -26.59737460027751, 7.136851042915751, -18.32514565114342, 13.149576440893044, -20.498955289809846, 26.4152737792476, -24.306914967475244, 10.74843371199191, -29.828309072093653]
     render(angles)
