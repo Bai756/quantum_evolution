@@ -1,15 +1,15 @@
 import math
 import random
-import pygame as pg
 
 
 class Creature:
-    def __init__(self, angles):
+    def __init__(self, angles=None, model=None):
         self.pos = [0, 0]
         self.age = 0
         self.orientation = 0 # 0: up, 1: right 2: down 3: left
         self.food_eaten = 0
-        self.angles = list(angles)
+        self.angles = angles
+        self.model = model
         self.visited_positions = []
 
     def __repr__(self):
@@ -120,6 +120,7 @@ class Environment:
         }
 
     def render(self, screen):
+        import pygame as pg
         cell_size = 40
         WHITE = (255, 255, 255)
         BLUE = (50, 100, 255)
