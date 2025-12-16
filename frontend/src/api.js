@@ -9,10 +9,11 @@ const api = axios.create({
 export default api;
 
 // change this later
-const WS_URL = 'ws://localhost:8000/ws/evolution';
+const WS_BASE = 'ws://localhost:8000/ws/evolution';
 
-export function createEvolutionSocket(params, onMessage) {
-	const socket = new WebSocket(WS_URL);
+export function createEvolutionSocket(params, onMessage, quantum = true) {
+	const url = `${WS_BASE}?quantum=${quantum ? 'true' : 'false'}`;
+	const socket = new WebSocket(url);
 
 	socket.onopen = () => {
 		socket.send(JSON.stringify(params));

@@ -26,7 +26,7 @@ def simulate(c, runner, seed=None, steps=10):
     return c, fitness
 
 
-def mutate(creature, chance, sigma=0.1):
+def mutate(creature, chance, sigma=0.5):
     weights = creature.model.get_weights()
     new_weights = []
     for w in weights:

@@ -8,6 +8,7 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 	const [repeats, setRepeats] = useState(3);
 	const [elites, setElites] = useState(2);
 	const [running, setRunning] = useState(false);
+	const [quantum, setQuantum] = useState(true);
 	const wsRef = useRef(null);
 
 	function handleRunEvolution() {
@@ -41,12 +42,23 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 				console.log(msg)
 				onSnapshot(msg);
 			}
-		});
+		}, quantum);
 	}
 
 	return (
 		<div style={{ marginBottom: 16, textAlign: 'left' }}>
 			<h3>Evolution controls</h3>
+
+			<label>
+				Mode:
+				<br />
+				<select value={quantum ? 'quantum' : 'classical'} onChange={(e) => setQuantum(e.target.value === 'quantum')}>
+					<option value="quantum">Quantum</option>
+					<option value="classical">Classical</option>
+				</select>
+			</label>
+
+			<br />
 
 			<label>
 				Generations: {generations}

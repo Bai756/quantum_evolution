@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from simulate import Creature, Environment, QuantumRunner
-from web_helpers import evolution_async
+from web_helpers import evolution_async, evolution_classical_async
+from simulate_classical import ClassicalRunner
 
 class CreatureSnapshot(BaseModel):
     angles: List[float]
@@ -67,6 +68,9 @@ def get_creature():
 async def ws_evolution(ws: WebSocket):
     await ws.accept()
 
+    q = ws.query_params.get("quantum", "1")
+    quantum = q.lower() in ("1", "true")
+
     current_best = {
         "creature": None,
         "fitness": 0.0,
@@ -103,15 +107,25 @@ async def ws_evolution(ws: WebSocket):
                     last_version = holder["version"]
 
                     base = holder["creature"]
-                    angles = list(base.angles)
-                    fresh = Creature(angles)
+                    if quantum:
+                        runner = QuantumRunner()
+                        angles = list(base.angles)
+                        fresh = Creature(angles=angles)
+                    else:
+                        runner = ClassicalRunner()
+                        weights = base.model.get_weights()
+                        fresh = Creature(model=ClassicalRunner(weights=weights))
 
+                    print(fresh)
+                    print(fresh.model)
                     env = Environment(fresh)
                     env.generate_food()
-                    runner = QuantumRunner()
 
                 vision = env.get_local_sight()
-                action = runner.get_action(env.player.angles, vision)
+                if quantum:
+                    action = runner.get_action(env.player.angles, vision)
+                else:
+                    action = runner.get_action(vision)
                 env.step(action)
 
                 await send_simulation_snapshot(env, holder)
@@ -125,10 +139,18 @@ async def ws_evolution(ws: WebSocket):
             return
 
     async def send_best(gen, creature, fitness):
-        await ws.send_json(
-            {"best": {"angles": creature.angles, "fitness": fitness},
-             "generation": gen
-             })
+        print(creature)
+        print(creature.model)
+        if quantum:
+            await ws.send_json(
+                {"best": {"angles": creature.angles, "fitness": fitness},
+                 "generation": gen
+                 })
+        else:
+            await ws.send_json(
+                {"best": {"weights": creature.model.get_weights(), "fitness": fitness},
+                 "generation": gen
+                 })
 
     try:
         init_payload = await ws.receive_json()
@@ -139,16 +161,28 @@ async def ws_evolution(ws: WebSocket):
         best_fitness = float("-inf")
         best_final = None
 
-        async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites):
-            if fitness > best_fitness:
-                best_fitness = fitness
-                best_final = (creature, fitness, gen + 1)
-                await send_best(gen + 1, creature, fitness)
+        if quantum:
+            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites):
+                if fitness > best_fitness:
+                    best_fitness = fitness
+                    best_final = (creature, fitness, gen + 1)
+                    await send_best(gen + 1, creature, fitness)
 
-            current_best["creature"] = creature
-            current_best["fitness"] = fitness
-            current_best["generation"] = gen + 1
-            current_best["version"] += 1
+                current_best["creature"] = creature
+                current_best["fitness"] = fitness
+                current_best["generation"] = gen + 1
+                current_best["version"] += 1
+        else:
+            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites):
+                if fitness > best_fitness:
+                    best_fitness = fitness
+                    best_final = (creature, fitness, gen + 1)
+                    await send_best(gen + 1, creature, fitness)
+
+                current_best["creature"] = creature
+                current_best["fitness"] = fitness
+                current_best["generation"] = gen + 1
+                current_best["version"] += 1
 
         final_creature, final_fitness, final_gen = best_final
 
