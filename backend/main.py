@@ -9,7 +9,6 @@ from web_helpers import evolution_async, evolution_classical_async
 from simulate_classical import ClassicalRunner
 
 class CreatureSnapshot(BaseModel):
-    angles: List[float]
     pos: List[int]
     orientation: int
     food_eaten: int
@@ -20,7 +19,6 @@ class CreatureSnapshot(BaseModel):
 
 def creature_to_snapshot(creature: Creature, env: Environment, fitness: float, generation: int) -> CreatureSnapshot:
     return CreatureSnapshot(
-        angles=creature.angles,
         pos=creature.pos,
         orientation=creature.orientation,
         food_eaten=creature.food_eaten,
@@ -112,9 +110,9 @@ async def ws_evolution(ws: WebSocket):
                         angles = list(base.angles)
                         fresh = Creature(angles=angles)
                     else:
-                        runner = ClassicalRunner()
                         weights = base.model.get_weights()
                         fresh = Creature(model=ClassicalRunner(weights=weights))
+                        runner = fresh.model
 
                     env = Environment(fresh)
                     env.generate_food()
@@ -125,7 +123,6 @@ async def ws_evolution(ws: WebSocket):
                 else:
                     action = runner.get_action(vision)
                 env.step(action)
-
                 await send_simulation_snapshot(env, holder)
 
                 await asyncio.sleep(0.5)
@@ -159,7 +156,7 @@ async def ws_evolution(ws: WebSocket):
 
         if quantum:
             async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites):
-                if fitness > best_fitness:
+                if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
                     await send_best(gen + 1, creature, fitness)
@@ -170,7 +167,7 @@ async def ws_evolution(ws: WebSocket):
                 current_best["version"] += 1
         else:
             async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites):
-                if fitness > best_fitness:
+                if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
                     await send_best(gen + 1, creature, fitness)
