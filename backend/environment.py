@@ -13,7 +13,10 @@ class Creature:
         self.visited_positions = []
 
     def __repr__(self):
-        return f"{self.angles}"
+        if self.angles:
+            return f"Creature(angles={self.angles})"
+        else:
+            return f"Creature(model={self.model})"
 
     def forward_pos(self):
         x, y = self.pos

@@ -116,8 +116,6 @@ async def ws_evolution(ws: WebSocket):
                         weights = base.model.get_weights()
                         fresh = Creature(model=ClassicalRunner(weights=weights))
 
-                    print(fresh)
-                    print(fresh.model)
                     env = Environment(fresh)
                     env.generate_food()
 
@@ -139,16 +137,14 @@ async def ws_evolution(ws: WebSocket):
             return
 
     async def send_best(gen, creature, fitness):
-        print(creature)
-        print(creature.model)
         if quantum:
             await ws.send_json(
-                {"best": {"angles": creature.angles, "fitness": fitness},
+                {"best": {"fitness": fitness},
                  "generation": gen
                  })
         else:
             await ws.send_json(
-                {"best": {"weights": creature.model.get_weights(), "fitness": fitness},
+                {"best": {"fitness": fitness},
                  "generation": gen
                  })
 

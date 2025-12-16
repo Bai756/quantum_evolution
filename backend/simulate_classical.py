@@ -26,7 +26,7 @@ def simulate(c, runner, seed=None, steps=10):
     return c, fitness
 
 
-def mutate(creature, chance, sigma=0.5):
+def mutate_classical(creature, chance, sigma=0.5):
     weights = creature.model.get_weights()
     new_weights = []
     for w in weights:
@@ -56,7 +56,7 @@ def evolution(generations, children, chance, repeats, elites):
 
         for j in range(len(parents)):
             for _ in range(children):
-                child = mutate(parents[j], chance)
+                child = mutate_classical(parents[j], chance)
                 population.append(child)
 
         candidates = parents + population

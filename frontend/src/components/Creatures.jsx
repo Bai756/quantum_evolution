@@ -42,7 +42,7 @@ export default function CreatureCanvas({ snapshot }) {
 		if (snapshot.best) {
 			setBest(snapshot.best);
 		}
-		if (snapshot.angles && snapshot.grid) {
+		if (snapshot.grid) {
 			setCreature(snapshot);
 			setLastGen(snapshot.generation);
 			setLastFitness(snapshot.fitness);
