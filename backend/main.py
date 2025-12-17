@@ -117,7 +117,7 @@ async def ws_evolution(ws: WebSocket):
                     env = Environment(fresh)
                     env.generate_food()
 
-                vision = env.get_local_sight()
+                vision = env.get_sight()
                 if quantum:
                     action = runner.get_action(env.player.angles, vision)
                 else:

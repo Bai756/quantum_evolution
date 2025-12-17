@@ -7,7 +7,7 @@ def simulate(c, runner, seed=None, steps=10):
     env = Environment(c, seed=seed)
     env.generate_food()
     for i in range(steps):
-        action = runner.get_action(c.angles, env.get_local_sight())
+        action = runner.get_action(c.angles, env.get_sight())
         _ = env.step(action)
         # print(repr(env))
 
@@ -87,12 +87,12 @@ def evolution(generations, children, chance, repeats, elites):
 def render(angles):
     import pygame as pg
     pg.init()
-    screen = pg.display.set_mode((200, 200))
     fps = 2
     c = Creature(angles)
     runner = QuantumRunner()
     env = Environment(c, seed=random.randint(0, 9999999))
     env.generate_food()
+    screen = pg.display.set_mode((40 * env.size, 40 * env.size))
 
     clock = pg.time.Clock()
 
@@ -102,7 +102,7 @@ def render(angles):
             if event.type == pg.QUIT:
                 running = False
 
-        action = runner.get_action(c.angles, vision=env.get_local_sight())
+        action = runner.get_action(c.angles, vision=env.get_sight())
         print(action)
         env.step(action)
         env.render(screen)
@@ -116,5 +116,5 @@ def render(angles):
 if __name__ == "__main__":
     # evolution(20, 10, 0.2, 3, 5)
 
-    angles = [34.54886511018649, -12.097268748762534, -9.177594991590729, 28.643305517127473, -0.274457538387189, 32.83530940763925, -6.444542576025194, -21.349586688070268, -10.120956402620724, -20.049398906949275, 1.8075166748596487, -12.00778838841676, -26.18011520334503, -20.026699621147, -19.913412870670722, 20.292132058523187, 27.381391378412914, -23.91878140753745, -1.316596000358409, -19.149377898547215]
+    angles = [-29.0837202551213, 34.855525154033025, -2.8092032794397612, -3.8994805031321, 27.21273607795417, 25.52637708603278, -29.392948398981908, -16.836954149972538, -4.7529119088527825, -0.6266165086584694, 7.078803902470396, -20.655962038102903, -31.078898546148473, 23.896015687653687, 9.122053983864246, 10.857857149352515, 3.7682642660411005, 23.659698078377474, -31.657232688278064, -23.546241246807334]
     render(angles)

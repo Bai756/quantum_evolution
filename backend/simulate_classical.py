@@ -1,5 +1,5 @@
 from environment import *
-from runner import ClassicalRunner
+from classical_runner import ClassicalRunner
 import random
 import numpy as np
 
@@ -8,7 +8,7 @@ def simulate(c, runner, seed=None, steps=10):
     env = Environment(c, seed=seed)
     env.generate_food()
     for i in range(steps):
-        action = runner.get_action(env.get_local_sight())
+        action = runner.get_action(env.get_sight())
         _ = env.step(action)
         # print(repr(env))
 
@@ -26,7 +26,7 @@ def simulate(c, runner, seed=None, steps=10):
     return c, fitness
 
 
-def mutate_classical(creature, chance, sigma=0.5):
+def mutate_classical(creature, chance, sigma=1):
     weights = creature.model.get_weights()
     new_weights = []
     for w in weights:
@@ -82,12 +82,12 @@ def evolution(generations, children, chance, repeats, elites):
 def render(weights):
     import pygame as pg
     pg.init()
-    screen = pg.display.set_mode((200, 200))
     fps = 2
     runner = ClassicalRunner(weights=weights)
     c = Creature(model=runner)
     env = Environment(c, seed=random.randint(0, 9999999))
     env.generate_food()
+    screen = pg.display.set_mode((40 * env.size, 40 * env.size))
 
     clock = pg.time.Clock()
 
@@ -97,7 +97,7 @@ def render(weights):
             if event.type == pg.QUIT:
                 running = False
 
-        action = runner.get_action(env.get_local_sight())
+        action = runner.get_action(env.get_sight())
         print(action)
         env.step(action)
         env.render(screen)
@@ -111,5 +111,16 @@ def render(weights):
 if __name__ == "__main__":
     weights = evolution(20, 10, 0.2, 3, 5)
 
-    # weights = []
+    # save the top weight to a txt file
+    file_path = "best_classical_weights.txt"
+    with open(file_path, "w") as f:
+        for layer_weights in weights[0]:
+            arr = np.array(layer_weights)
+            if arr.ndim == 1:
+                f.write(",".join(str(float(x)) for x in arr) + "\n")
+            else:
+                for row in arr:
+                    f.write(",".join(str(float(x)) for x in row) + "\n")
+            f.write("---\n")
+
     render(weights[0])

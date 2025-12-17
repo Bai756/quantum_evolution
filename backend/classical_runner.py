@@ -40,17 +40,30 @@ class ClassicalRunner:
 
 
 if __name__ == "__main__":
-    print("start")
-    runner = ClassicalRunner(weights=[[-0.98467565, -0.7568704 ,  0.49763608, -0.7747624 , -0.4939476 ,
-        -0.40649942,  0.4878192 , -0.38594908],
-       [ 0.50112903, -1.0577985 ,  0.7714104 ,  0.45268178, -0.23736063,
-         0.01158876,  0.8222665 , -0.3842181 ],
-       [ 0.76227695, -1.0852277 ,  0.10910174, -1.138058  ,  0.41732997,
-         0.10171562,  0.6722212 , -0.91750693]])
-    print("loaded")
+    file_path = "best_classical_weights.txt"
+    with open(file_path, "r") as f:
+        weights = []
+        current_weight = []
+        for line in f:
+            line = line.strip()
+            if line == "---":
+                if current_weight:
+                    arr = np.array(current_weight, dtype=float)
+                    if arr.ndim == 2 and arr.shape[0] == 1:
+                        arr = arr.flatten()
+                    weights.append(arr)
+                    current_weight = []
+            else:
+                if line:
+                    current_weight.append([float(x) for x in line.split(",")])
+
+        if current_weight:
+            arr = np.array(current_weight, dtype=float)
+            if arr.ndim == 2 and arr.shape[0] == 1:
+                arr = arr.flatten()
+            weights.append(arr)
+
+    runner = ClassicalRunner(weights=weights)
     for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (2, 2, 2)]:
         actions = [runner.get_action(vision) for _ in range(100)]
         print(f"{vision} -", Counter(actions))
-
-
-

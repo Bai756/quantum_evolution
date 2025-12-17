@@ -48,7 +48,7 @@ class Creature:
 
 
 class Environment:
-    def __init__(self, creature, s=5, seed=None):
+    def __init__(self, creature, s=10, seed=None):
         self.size = s
         self.grid = [[0] * self.size for i in range(self.size)]
         self.player = creature
@@ -177,7 +177,7 @@ class Environment:
                     return True
         return False
 
-    def get_local_sight(self):
+    def get_sight_blocks(self, n=6):
         row, col = self.player.pos
         # orientation: 0 up, 1 right, 2 down, 3 left
         if self.player.orientation == 0:
@@ -189,17 +189,39 @@ class Environment:
         else:
             directions = [(0, -1), (1, 0), (-1, 0)]
 
-        senses = []
+        blocks = []
         for dr, dc in directions:
-            r = row + dr
-            c = col + dc
-            if not self.in_bounds((r, c)):
-                senses.append(2)
-            else:
-                cell = self.grid[r][c]
-                if cell == 2:
-                    senses.append(1)
+            dir_list = []
+            for i in range(1, n + 1):
+                r = row + dr * i
+                c = col + dc * i
+                if not self.in_bounds((r, c)):
+                    dir_list.append(2)
                 else:
-                    senses.append(0)
+                    cell = self.grid[r][c]
+                    if cell == 2:
+                        # food
+                        dir_list.append(1)
+                    else:
+                        # empty or creature
+                        dir_list.append(0)
+            blocks.append(dir_list)
 
-        return tuple(senses) # front, left, right
+        return tuple(blocks)
+
+    def get_sight(self, n=6):
+        # returns the first sighted object in each direction
+        blocks = self.get_sight_blocks(n)
+        summary = []
+        for dir_list in blocks:
+            val = 0
+            for v in dir_list:
+                if v == 1:
+                    val = 1
+                    break
+                if v == 2:
+                    val = 2
+                    break
+            summary.append(val)
+
+        return tuple(summary) # front, left, right
