@@ -3,11 +3,11 @@ from quantum_runner import *
 import random
 
 
-def simulate(c, runner, seed=None, steps=10):
-    env = Environment(c, seed=seed)
+def simulate(c, runner, seed=None, steps=10, grid_size=9):
+    env = Environment(c, s=grid_size, seed=seed)
     env.generate_food()
     for i in range(steps):
-        action = runner.get_action(c.angles, env.get_sight())
+        action = runner.get_action(c.angles, env.get_sight(n=grid_size//2))
         _ = env.step(action)
         # print(repr(env))
 
@@ -34,12 +34,12 @@ def mutate(creature, chance, sigma=3):
     return Creature(new_angles)
 
 
-def evaluate_average(c, runner, repeats=3):
+def evaluate_average(c, runner, repeats=3, grid_size=9):
     total = 0.0
     for r in range(repeats):
         seed = (hash(tuple(c.angles)) + r) & 0xFFFFFFFF
         # seed = random.randint(0, 9999999)
-        _, f = simulate(c, runner, seed=seed)
+        _, f = simulate(c, runner, seed=seed, grid_size=grid_size)
         total += f
     return total / repeats
 
@@ -84,13 +84,13 @@ def evolution(generations, children, chance, repeats, elites):
     return [list(p.angles) for p in parents]
 
 
-def render(angles):
+def render(angles, grid_size=9):
     import pygame as pg
     pg.init()
     fps = 2
     c = Creature(angles)
     runner = QuantumRunner()
-    env = Environment(c, seed=random.randint(0, 9999999))
+    env = Environment(c, s=grid_size, seed=random.randint(0, 9999999))
     env.generate_food()
     screen = pg.display.set_mode((40 * env.size, 40 * env.size))
 

@@ -5,6 +5,7 @@ import EvolutionControls from './components/EvolutionControls.jsx';
 
 const App = () => {
 	const [snapshot, setSnapshot] = useState(null);
+	const [gridSize, setGridSize] = useState(9);
 
 	function handleSnapshot(msg) {
 		setSnapshot(msg);
@@ -21,10 +22,10 @@ const App = () => {
 			<main>
 				<div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', justifyContent: 'center' }}>
 					<div style={{ width: 360 }}>
-						<EvolutionControls onSnapshot={handleSnapshot} onBest={handleBest}/>
+						<EvolutionControls gridSize={gridSize} setGridSize={setGridSize} onSnapshot={handleSnapshot} onBest={handleBest}/>
 					</div>
 					<div>
-						<CreatureList snapshot={snapshot} />
+						<CreatureList snapshot={snapshot} gridSize={gridSize} />
 					</div>
 				</div>
 			</main>

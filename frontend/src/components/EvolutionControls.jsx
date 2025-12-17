@@ -1,7 +1,7 @@
 import React, {useRef, useState} from 'react';
 import {createEvolutionSocket} from '../api';
 
-export default function EvolutionControls({ onSnapshot, onBest }) {
+export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize }) {
 	const [generations, setGenerations] = useState(20);
 	const [children, setChildren] = useState(10);
 	const [chance, setChance] = useState(0.2);
@@ -23,6 +23,7 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 			chance: Number(chance),
 			repeats: Number(repeats),
 			elites: Number(elites),
+			grid_size: Number(gridSize || 9),
 		};
 		setRunning(true);
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
@@ -51,18 +52,18 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 
 			<label>
 				Mode:
-				<br />
+				<br/>
 				<select value={quantum ? 'quantum' : 'classical'} onChange={(e) => setQuantum(e.target.value === 'quantum')}>
 					<option value="quantum">Quantum</option>
 					<option value="classical">Classical</option>
 				</select>
 			</label>
 
-			<br />
+			<br/>
 
 			<label>
 				Generations: {generations}
-				<br />
+				<br/>
 				<input
 					type="range"
 					min="1"
@@ -72,11 +73,11 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 				/>
 			</label>
 
-			<br />
+			<br/>
 
 			<label>
 				Children per parent: {children}
-				<br />
+				<br/>
 				<input
 					type="range"
 					min="1"
@@ -86,11 +87,11 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 				/>
 			</label>
 
-			<br />
+			<br/>
 
 			<label>
 				Mutation chance: {chance}
-				<br />
+				<br/>
 				<input
 					type="range"
 					min="0"
@@ -101,11 +102,11 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 				/>
 			</label>
 
-			<br />
+			<br/>
 
 			<label>
 				Repeats (fitness average): {repeats}
-				<br />
+				<br/>
 				<input
 					type="range"
 					min="1"
@@ -115,17 +116,31 @@ export default function EvolutionControls({ onSnapshot, onBest }) {
 				/>
 			</label>
 
-			<br />
+			<br/>
 
 			<label>
 				Number of elites to return: {elites}
-				<br />
+				<br/>
 				<input
 					type="range"
 					min="1"
 					max="10"
 					value={elites}
 					onChange={(e) => setElites(e.target.value)}
+				/>
+			</label>
+
+			<br/>
+
+			<label>
+				Grid Size: {gridSize}
+				<br/>
+				<input
+					type="range"
+					min="5"
+					max="15"
+					value={gridSize}
+					onChange={(e) => setGridSize(Number(e.target.value))}
 				/>
 			</label>
 

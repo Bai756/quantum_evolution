@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import api from '../api';
 
 const CELL_SIZE = 40;
-const GRID_SIZE = 5;
 
-export default function CreatureCanvas({ snapshot }) {
+export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 	const canvasReference = useRef(null);
 	const [creature, setCreature] = useState(null);
 	const [lastGen, setLastGen] = useState(null);
@@ -56,7 +55,8 @@ export default function CreatureCanvas({ snapshot }) {
 		}
 
 		const drawingContext = canvasElement.getContext('2d');
-		const totalSizePx = CELL_SIZE * GRID_SIZE;
+		const size = (creature.grid && creature.grid.length) ? creature.grid.length : gridSize;
+		const totalSizePx = CELL_SIZE * size;
 		canvasElement.width = totalSizePx;
 		canvasElement.height = totalSizePx;
 
@@ -70,8 +70,8 @@ export default function CreatureCanvas({ snapshot }) {
 		const GRID_LINE_COLOR = '#b4b4b4';
 		const TRIANGLE_COLOR = '#000000';
 
-		for (let row = 0; row < GRID_SIZE; row++) {
-			for (let col = 0; col < GRID_SIZE; col++) {
+		for (let row = 0; row < size; row++) {
+			for (let col = 0; col < size; col++) {
 				const value = gridToDraw[row][col];
 				let fill = COLOR_EMPTY;
 				if (value === 1) {
@@ -87,7 +87,7 @@ export default function CreatureCanvas({ snapshot }) {
 		// draw grid lines
 		drawingContext.strokeStyle = GRID_LINE_COLOR;
 		drawingContext.lineWidth = 1;
-		for (let i = 0; i <= GRID_SIZE; i++) {
+		for (let i = 0; i <= size; i++) {
 			const position = i * CELL_SIZE + 0.5;
 			drawingContext.beginPath();
 			drawingContext.moveTo(position, 0);
@@ -102,7 +102,7 @@ export default function CreatureCanvas({ snapshot }) {
 
 		const playerPosition = Array.isArray(creature.pos)
 			? creature.pos
-			: [Math.floor(GRID_SIZE / 2), Math.floor(GRID_SIZE / 2)];
+			: [Math.floor(size / 2), Math.floor(size / 2)];
 		const row = playerPosition[0];
 		const col = playerPosition[1];
 		const orientation = creature.orientation;
@@ -146,7 +146,7 @@ export default function CreatureCanvas({ snapshot }) {
 		drawingContext.lineTo(points[2][0], points[2][1]);
 		drawingContext.closePath();
 		drawingContext.fill();
-	}, [creature]);
+	}, [creature, gridSize]);
 
 	let bestFitnessText = '';
 	if (best && typeof best.fitness === 'number') {
@@ -175,3 +175,8 @@ export default function CreatureCanvas({ snapshot }) {
 		</div>
 	);
 }
+
+// TODO:
+// allow users to rerun sim for the mos fit creature
+// add slider for vision based on grid size
+// normalize distance for vision

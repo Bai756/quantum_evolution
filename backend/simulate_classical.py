@@ -4,11 +4,11 @@ import random
 import numpy as np
 
 
-def simulate(c, runner, seed=None, steps=10):
-    env = Environment(c, seed=seed)
+def simulate(c, runner, seed=None, steps=10, grid_size=9):
+    env = Environment(c, s=grid_size, seed=seed)
     env.generate_food()
     for i in range(steps):
-        action = runner.get_action(env.get_sight())
+        action = runner.get_action(env.get_sight(n=grid_size//2))
         _ = env.step(action)
         # print(repr(env))
 
@@ -38,11 +38,11 @@ def mutate_classical(creature, chance, sigma=1):
     return Creature(model=ClassicalRunner(weights=new_weights))
 
 
-def evaluate_average(c, runner, repeats=3):
+def evaluate_average(c, runner, repeats=3, grid_size=9):
     total = 0.0
     for r in range(repeats):
         seed = random.randint(0, 9999999)
-        _, f = simulate(c, runner, seed=seed)
+        _, f = simulate(c, runner, seed=seed, grid_size=grid_size)
         total += f
     return total / repeats
 
@@ -79,13 +79,13 @@ def evolution(generations, children, chance, repeats, elites):
     return [p.model.get_weights() for p in parents]
 
 
-def render(weights):
+def render(weights, grid_size=9):
     import pygame as pg
     pg.init()
     fps = 2
     runner = ClassicalRunner(weights=weights)
     c = Creature(model=runner)
-    env = Environment(c, seed=random.randint(0, 9999999))
+    env = Environment(c, s=grid_size, seed=random.randint(0, 9999999))
     env.generate_food()
     screen = pg.display.set_mode((40 * env.size, 40 * env.size))
 
