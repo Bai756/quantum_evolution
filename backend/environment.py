@@ -48,7 +48,7 @@ class Creature:
 
 
 class Environment:
-    def __init__(self, creature, s=10, seed=None):
+    def __init__(self, creature, s=9, seed=None):
         self.size = s
         self.grid = [[0] * self.size for i in range(self.size)]
         self.player = creature
@@ -210,18 +210,27 @@ class Environment:
         return tuple(blocks)
 
     def get_sight(self, n=6):
-        # returns the first sighted object in each direction
+        # returns (front, left, right) with normalized values corresponding to distance to nearest food or wall
         blocks = self.get_sight_blocks(n)
         summary = []
         for dir_list in blocks:
             val = 0
-            for v in dir_list:
-                if v == 1:
-                    val = 1
+            for i in range(len(dir_list)):
+                proximity = (n - i) / n
+                if dir_list[i] == 1:
+                    val = proximity
                     break
-                if v == 2:
-                    val = 2
+                elif dir_list[i] == 2:
+                    val = -proximity
                     break
             summary.append(val)
 
         return tuple(summary) # front, left, right
+
+if __name__ == "__main__":
+    c = Creature()
+    env = Environment(c, s=9)
+    env.generate_food()
+    print(env)
+    sight = env.get_sight(4)
+    print("Sight:", sight)

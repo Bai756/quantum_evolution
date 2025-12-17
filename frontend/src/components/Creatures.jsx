@@ -180,3 +180,4 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 // allow users to rerun sim for the mos fit creature
 // add slider for vision based on grid size
 // normalize distance for vision
+

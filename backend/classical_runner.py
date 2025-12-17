@@ -3,10 +3,13 @@ from collections import Counter
 import numpy as np
 
 class ClassicalRunner:
-    def __init__(self, weights=None):
+    def __init__(self, weights=None, dropout=0.1):
         self.model = Sequential([
             layers.Input(shape=(3,)),
-            layers.Dense(8, activation="tanh"),
+            layers.Dense(64, activation="tanh"),
+            layers.Dropout(dropout),
+            layers.Dense(32, activation="tanh"),
+            layers.Dropout(dropout),
             layers.Dense(4, activation="linear"),
         ])
 
@@ -24,16 +27,10 @@ class ClassicalRunner:
         self.model.set_weights(weights)
 
     def get_action(self, vision):
-        # Normalize vision
-        x = np.array([
-            vision[0] / 2.0,
-            vision[1] / 2.0,
-            vision[2] / 2.0,
-        ], dtype=np.float32)
+        x = np.asarray(vision, dtype=np.float32).reshape(1, -1)
+        probs = self.model(x, training=False).numpy()[0]
 
-        logits = self.model(x[None, :], training=False).numpy()[0]
-
-        return int(np.argmax(logits))
+        return int(np.argmax(probs))
 
     def get_weights(self):
         return self.model.get_weights()

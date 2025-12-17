@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from math import pi
 from collections import Counter
 import random
+import math
 
 
 def run_tests(angles):
@@ -88,6 +89,7 @@ class QuantumRunner:
         # This is not necessary. just temporarily here because if not it doesn't work
         qc.cx(0, 5)
         qc.cx(1, 6)
+        qc.cx(2, 6)
 
         # Final rotations on the action qubits before measurement
         qc.ry(self.parameters[16], 5)
@@ -103,16 +105,14 @@ class QuantumRunner:
     def _prepare_vision(self, qc, vision):
         # encodes vision as a basis state to make it strongly influence the circuit
         front, left, right = vision
-        for s, q in zip((front, left, right), (0, 1, 2)):
-            # empty - |0>
-            if s == 0:
-                continue
-            # food - |1>
-            if s == 1:
-                qc.x(q)
-            # wall - |+>
-            elif s == 2:
-                qc.z(q)
+        for i, s in enumerate((front, left, right)):
+            # rotation of the x, maybe keep this?
+            # qc.rx((pi / 2) * s, i)
+
+            # initialize a state directly based on s
+            theta = pi * s
+            state = [math.cos(theta / 2), math.sin(theta / 2)]
+            qc.initialize(state, i)
 
     def get_action(self, angles, vision):
         if len(angles) < len(self.parameters):
