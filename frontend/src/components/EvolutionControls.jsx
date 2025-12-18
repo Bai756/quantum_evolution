@@ -9,6 +9,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [elites, setElites] = useState(2);
 	const [running, setRunning] = useState(false);
 	const [quantum, setQuantum] = useState(true);
+	const [done, setDone] = useState(false);
 	const wsRef = useRef(null);
 
 	useEffect(() => {
@@ -20,6 +21,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	}, [gridSize]);
 
 	function handleRunEvolution() {
+		setDone(false);
 		// close previous stream if any
 		if (wsRef.current) {
 			try { wsRef.current.close(); } catch (_) {}
@@ -39,20 +41,30 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			if (msg.error) {
 				console.error('WS evolution error:', msg.error);
 				setRunning(false);
-			} else if (msg.done && msg.best) {
-				// optional intermediate done=false best was sent previously
+				setDone(false);
 			} else if (msg.best) {
 				onBest(msg.best);
 			} else if (msg.simulation) {
 				onSnapshot(msg);
 			} else if (msg.done) {
 				setRunning(false);
+				setDone(true);
 			} else {
 				// regular snapshot
-				console.log(msg)
 				onSnapshot(msg);
 			}
 		}, quantum);
+	}
+
+	function handleResetSimulation() {
+		if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+			return;
+		}
+		try {
+			wsRef.current.send(JSON.stringify({ reset_simulation: true }));
+		} catch (e) {
+			console.error('Failed to send reset_simulation:', e);
+		}
 	}
 
 	return (
@@ -163,10 +175,15 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   onChange={(e) => setVisionRange(Number(e.target.value))} />
 			</label>
 
-			<div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+			<div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
 				<button onClick={handleRunEvolution} disabled={running}>
 					{running ? 'Running...' : 'Run Evolution'}
 				</button>
+				{done && (
+					<button onClick={handleResetSimulation}>
+						Reset simulation
+					</button>
+				)}
 			</div>
 		</div>
 	);

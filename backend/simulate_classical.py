@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 
-def simulate(c, runner, seed=None, steps=10, grid_size=9, vision_range=None):
+def simulate(c, runner, seed=None, steps=20, grid_size=9, vision_range=None):
     env = Environment(c, s=grid_size, seed=seed)
     env.generate_food()
     vr = vision_range if vision_range is not None else grid_size // 2

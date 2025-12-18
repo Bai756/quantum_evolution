@@ -77,7 +77,8 @@ async def ws_evolution(ws: WebSocket):
         "generation": 0,
         "version": 0,
     }
-    stop_event = asyncio.Event()
+
+    sim_stop_event = asyncio.Event()
 
     async def send_simulation_snapshot(env, holder):
         snap = creature_to_snapshot(
@@ -88,33 +89,47 @@ async def ws_evolution(ws: WebSocket):
         )
         await ws.send_json({"simulation": True, **snap.model_dump()})
 
+    def _clone_creature_for_run(base: Creature):
+        if quantum:
+            runner = QuantumRunner()
+            angles = base.angles
+            fresh = Creature(angles=angles)
+            return fresh, runner
+
+        weights = base.model.get_weights()
+        runner = ClassicalRunner(weights=weights)
+        fresh = Creature(model=runner)
+        return fresh, runner
+
+    def reset_best_simulation():
+        current_best["version"] += 1
+        sim_stop_event.clear()
+
     async def sim_loop(grid_size, vision_range):
         last_version = -1
         env = None
         runner = None
 
         try:
-            while not stop_event.is_set():
+            while True:
+                if sim_stop_event.is_set():
+                    # Wait (without busy looping) until someone resets.
+                    await asyncio.sleep(0.1)
+                    continue
+
                 holder = current_best
                 if holder["creature"] is None:
                     # not started yet
                     await asyncio.sleep(0.1)
                     continue
 
-                # If the best creature changed, rebuild the environment and runner.
+                # If the best creature changed OR was reset, rebuild the environment and runner.
                 if holder["version"] != last_version:
-                    print("New best creature", holder["generation"])
+                    print("(re)starting simulation for gen", holder["generation"])
                     last_version = holder["version"]
 
                     base = holder["creature"]
-                    if quantum:
-                        runner = QuantumRunner()
-                        angles = list(base.angles)
-                        fresh = Creature(angles=angles)
-                    else:
-                        weights = base.model.get_weights()
-                        fresh = Creature(model=ClassicalRunner(weights=weights))
-                        runner = fresh.model
+                    fresh, runner = _clone_creature_for_run(base)
 
                     env = Environment(fresh, s=grid_size)
                     env.generate_food()
@@ -125,28 +140,23 @@ async def ws_evolution(ws: WebSocket):
                     action = runner.get_action(env.player.angles, vision)
                 else:
                     action = runner.get_action(vision)
+
                 env.step(action)
                 await send_simulation_snapshot(env, holder)
 
                 await asyncio.sleep(0.5)
                 if not env.has_food():
                     print("Simulation: all food eaten, done")
-                    stop_event.set()
-                    break
+                    sim_stop_event.set()
         except asyncio.CancelledError:
             return
 
     async def send_best(gen, creature, fitness):
-        if quantum:
-            await ws.send_json(
-                {"best": {"fitness": fitness},
-                 "generation": gen
-                 })
-        else:
-            await ws.send_json(
-                {"best": {"fitness": fitness},
-                 "generation": gen
-                 })
+        await ws.send_json(
+            {"best": {"fitness": fitness}, "generation": gen}
+        )
+
+    sim_task = None
 
     try:
         init_payload = await ws.receive_json()
@@ -191,12 +201,12 @@ async def ws_evolution(ws: WebSocket):
         await send_best(final_gen, final_creature, final_fitness)
         await ws.send_json({"done": True})
 
-        # wait until client disconnects
-        try:
-            while not stop_event.is_set():
-                await ws.receive_text()
-        except WebSocketDisconnect:
-            pass
+        # Keep connection open to expect a {"reset_simulation": true}
+        while True:
+            msg = await ws.receive_json()
+            if isinstance(msg, dict) and msg.get("reset_simulation"):
+                reset_best_simulation()
+                await ws.send_json({"reset_acknowledge": True})
 
     except WebSocketDisconnect:
         return
@@ -204,12 +214,10 @@ async def ws_evolution(ws: WebSocket):
         try:
             await ws.send_json({"error": str(exc)})
         finally:
-            stop_event.set()
+            sim_stop_event.set()
             await ws.close()
     finally:
-        # Clean up
-        # Apparently sim_task may not be defined if exception happens early
-        stop_event.set()
+        sim_stop_event.set()
         try:
             sim_task.cancel()
         except Exception:

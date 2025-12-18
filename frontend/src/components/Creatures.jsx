@@ -175,6 +175,3 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 		</div>
 	);
 }
-
-// TODO:
-// allow users to rerun sim for the most fit creature
