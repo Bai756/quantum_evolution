@@ -10,6 +10,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [running, setRunning] = useState(false);
 	const [quantum, setQuantum] = useState(true);
 	const [done, setDone] = useState(false);
+	const [maxMoves, setMaxMoves] = useState(5);
 	const wsRef = useRef(null);
 
 	useEffect(() => {
@@ -17,6 +18,10 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 		const max = Math.max(1, Math.floor(gridSize / 2));
 		if (visionRange > max) {
 			setVisionRange(max);
+		}
+		// limit max moves size
+		if (maxMoves > gridSize * 2) {
+			setMaxMoves(gridSize * 2);
 		}
 	}, [gridSize]);
 
@@ -33,8 +38,9 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			chance: Number(chance),
 			repeats: Number(repeats),
 			elites: Number(elites),
-			grid_size: Number(gridSize || 9),
+			grid_size: Number(gridSize),
 			vision_range: Number(visionRange || Math.floor(gridSize/2)),
+			max_moves: Number(maxMoves),
 		};
 		setRunning(true);
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
@@ -173,6 +179,18 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   max={Math.max(1, Math.floor(gridSize/2))}
 					   value={visionRange}
 					   onChange={(e) => setVisionRange(Number(e.target.value))} />
+			</label>
+
+			<br/>
+
+			<label>
+				Max Moves (energy): {maxMoves}
+				<br/>
+				<input type="range"
+					   min="1"
+					   max={Math.max(1, gridSize * 2)}
+					   value={maxMoves}
+					   onChange={(e) => setMaxMoves(Number(e.target.value))} />
 			</label>
 
 			<div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>

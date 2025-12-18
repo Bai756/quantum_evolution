@@ -3,7 +3,7 @@ import random
 
 
 class Creature:
-    def __init__(self, angles=None, model=None):
+    def __init__(self, angles=None, model=None, max_energy=5):
         self.pos = [0, 0]
         self.age = 0
         self.orientation = 0 # 0: up, 1: right 2: down 3: left
@@ -11,6 +11,8 @@ class Creature:
         self.angles = angles
         self.model = model
         self.visited_positions = []
+        self.max_energy = max_energy
+        self.energy = self.max_energy
 
     def __repr__(self):
         if self.angles:
@@ -28,7 +30,6 @@ class Creature:
             return [x+1, y]
         else:
             return [x, y-1]
-
     def turn_left(self):
         self.orientation = (self.orientation - 1) % 4
 
@@ -41,6 +42,7 @@ class Creature:
         self.orientation = 0
         self.food_eaten = 0
         self.visited_positions = []
+        self.energy = self.max_energy
 
     def normalize_angles(self):
         for i in range(len(self.angles)):
@@ -48,12 +50,15 @@ class Creature:
 
 
 class Environment:
-    def __init__(self, creature, s=9, seed=None):
+    def __init__(self, creature, s=9, seed=None, max_energy=5):
         self.size = s
         self.grid = [[0] * self.size for i in range(self.size)]
         self.player = creature
         self.player.pos = [s//2, s//2]
         self.grid[s//2][s//2] = 1
+        self.player.max_energy = max_energy
+        self.player.energy = self.player.max_energy
+
         if seed:
             random.seed(seed)
         else:
@@ -88,6 +93,10 @@ class Environment:
     def step(self, action):
         ate = False
         moved = False
+
+        # If energy is depleted action is ignored
+        if self.player.energy <= 0:
+            pass
         if action == 0:
             pass
         elif action == 1:
@@ -98,6 +107,7 @@ class Environment:
                 if self.grid[x][y] == 2:
                     ate = True
                     self.player.food_eaten += 1
+                    self.player.energy += 5
 
                 self.grid[old[0]][old[1]] = 0
                 self.grid[x][y] = 1
@@ -105,6 +115,9 @@ class Environment:
                 if new not in self.player.visited_positions:
                     self.player.visited_positions.append(new)
                 moved = True
+
+                # consume energy on successful forward moves
+                self.player.energy = max(0, self.player.energy - 1)
         elif action == 2:
             self.player.turn_left()
         elif action == 3:
@@ -119,7 +132,9 @@ class Environment:
             "moved": moved,
             "ate": ate,
             "position": self.player.pos,
-            "orientation": self.player.orientation
+            "orientation": self.player.orientation,
+            "energy": self.player.energy,
+            "max_energy": self.player.max_energy
         }
 
     def render(self, screen):

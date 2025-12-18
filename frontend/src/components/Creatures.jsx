@@ -9,6 +9,8 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 	const [lastGen, setLastGen] = useState(null);
 	const [lastFitness, setLastFitness] = useState(null);
 	const [best, setBest] = useState(null);
+	const [energy, setEnergy] = useState(null);
+	const [maxEnergy, setMaxEnergy] = useState(null);
 	const initializedRef = useRef(false);
 
 	useEffect(() => {
@@ -25,6 +27,8 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 				setCreature((prev) => prev ?? data);
 				setLastGen(data.generation);
 				setLastFitness(data.fitness);
+				setEnergy(data.energy);
+				setMaxEnergy(data.max_energy);
 			} catch (err) {
 				console.error('Failed to fetch initial creature:', err);
 			}
@@ -45,6 +49,8 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 			setCreature(snapshot);
 			setLastGen(snapshot.generation);
 			setLastFitness(snapshot.fitness);
+			setEnergy(snapshot.energy);
+			setMaxEnergy(snapshot.max_energy);
 		}
 	}, [snapshot]);
 
@@ -152,7 +158,10 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 	if (best && typeof best.fitness === 'number') {
 		bestFitnessText = best.fitness.toFixed(1);
 	}
-
+	let energyPercent = 0;
+	if (maxEnergy != null && energy != null) {
+		energyPercent = Math.max(0, Math.min(1, energy / maxEnergy));
+	}
 	return (
 		<div>
 			<div style={{ marginBottom: 8 }}>
@@ -172,6 +181,16 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 				style={{ border: '1px solid #dddddd', display: 'block' }}
 				aria-label="Creature grid"
 			/>
+			{maxEnergy != null && energy != null && (
+				<div style={{ marginTop: 8 }}>
+					<div style={{ height: 8, width: 200, background: '#eee', borderRadius: 4 }}>
+						<div style={{ width: `${Math.round(energyPercent*100)}%`, height: '100%', background: '#3264ff', borderRadius: 4 }} />
+					</div>
+					<div style={{ marginTop: 4 }}>
+						Energy: {energy} / {maxEnergy}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

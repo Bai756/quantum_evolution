@@ -4,8 +4,8 @@ import random
 import numpy as np
 
 
-def simulate(c, runner, seed=None, steps=20, grid_size=9, vision_range=None):
-    env = Environment(c, s=grid_size, seed=seed)
+def simulate(c, runner, seed=None, steps=20, grid_size=9, vision_range=None, max_moves = 5):
+    env = Environment(c, s=grid_size, seed=seed, max_energy=max_moves)
     env.generate_food()
     vr = vision_range if vision_range is not None else grid_size // 2
     for i in range(steps):
@@ -23,6 +23,12 @@ def simulate(c, runner, seed=None, steps=20, grid_size=9, vision_range=None):
     fitness = c.food_eaten * 100 + len(c.visited_positions)
     if c.food_eaten >= total_food:
         fitness += 1000
+
+    if c.energy <= 0:
+        fitness -= 50
+    else:
+        fitness += 20
+
     c.reset()
     return c, fitness
 
@@ -39,11 +45,11 @@ def mutate_classical(creature, chance, sigma=1):
     return Creature(model=ClassicalRunner(weights=new_weights))
 
 
-def evaluate_average(c, runner, repeats=3, grid_size=9, vision_range=None):
+def evaluate_average(c, runner, repeats=3, grid_size=9, vision_range=None, max_moves = 5):
     total = 0.0
     for r in range(repeats):
         seed = random.randint(0, 9999999)
-        _, f = simulate(c, runner, seed=seed, grid_size=grid_size, vision_range=vision_range)
+        _, f = simulate(c, runner, seed=seed, grid_size=grid_size, vision_range=vision_range, max_moves=max_moves)
         total += f
     return total / repeats
 

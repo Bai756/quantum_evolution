@@ -15,6 +15,8 @@ class CreatureSnapshot(BaseModel):
     grid: List[List[int]]
     fitness: float
     generation: int
+    energy: int
+    max_energy: int
 
 
 def creature_to_snapshot(creature: Creature, env: Environment, fitness: float, generation: int) -> CreatureSnapshot:
@@ -25,6 +27,8 @@ def creature_to_snapshot(creature: Creature, env: Environment, fitness: float, g
         grid=env.grid,
         fitness=fitness,
         generation=generation,
+        energy=creature.energy,
+        max_energy=creature.max_energy
     )
 
 
@@ -36,6 +40,7 @@ class RunParams(BaseModel):
     elites: int
     grid_size: int
     vision_range: int
+    max_moves: int
 
 
 class EvolutionResult(BaseModel):
@@ -93,19 +98,19 @@ async def ws_evolution(ws: WebSocket):
         if quantum:
             runner = QuantumRunner()
             angles = base.angles
-            fresh = Creature(angles=angles)
+            fresh = Creature(angles=angles, max_energy=base.max_energy)
             return fresh, runner
 
         weights = base.model.get_weights()
         runner = ClassicalRunner(weights=weights)
-        fresh = Creature(model=runner)
+        fresh = Creature(model=runner, max_energy=base.max_energy)
         return fresh, runner
 
     def reset_best_simulation():
         current_best["version"] += 1
         sim_stop_event.clear()
 
-    async def sim_loop(grid_size, vision_range):
+    async def sim_loop(grid_size, vision_range, max_moves):
         last_version = -1
         env = None
         runner = None
@@ -131,7 +136,7 @@ async def ws_evolution(ws: WebSocket):
                     base = holder["creature"]
                     fresh, runner = _clone_creature_for_run(base)
 
-                    env = Environment(fresh, s=grid_size)
+                    env = Environment(fresh, s=grid_size, max_energy=max_moves)
                     env.generate_food()
 
                 vision = env.get_sight(vision_range)
@@ -162,13 +167,13 @@ async def ws_evolution(ws: WebSocket):
         init_payload = await ws.receive_json()
         params = RunParams(**init_payload)
 
-        sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range))
+        sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range, params.max_moves))
 
         best_fitness = float("-inf")
         best_final = None
 
         if quantum:
-            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range):
+            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
@@ -179,7 +184,7 @@ async def ws_evolution(ws: WebSocket):
                 current_best["generation"] = gen + 1
                 current_best["version"] += 1
         else:
-            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range):
+            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
