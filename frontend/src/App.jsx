@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import CreatureList from './components/Creatures.jsx';
 import EvolutionControls from './components/EvolutionControls.jsx';
@@ -6,7 +6,19 @@ import EvolutionControls from './components/EvolutionControls.jsx';
 const App = () => {
 	const [snapshot, setSnapshot] = useState(null);
 	const [gridSize, setGridSize] = useState(9);
+	const [visionRange, setVisionRange] = useState(Math.floor(9 / 2));
 
+	useEffect(() => {
+		// lower visionRange if gridSize changes
+		setVisionRange((prev) => {
+			const max = Math.floor(gridSize / 2);
+			if (prev > max) {
+				return max;
+			}
+			return prev;
+		});
+	}, [gridSize]);
+	
 	function handleSnapshot(msg) {
 		setSnapshot(msg);
 	}
@@ -22,7 +34,14 @@ const App = () => {
 			<main>
 				<div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', justifyContent: 'center' }}>
 					<div style={{ width: 360 }}>
-						<EvolutionControls gridSize={gridSize} setGridSize={setGridSize} onSnapshot={handleSnapshot} onBest={handleBest}/>
+						<EvolutionControls
+							gridSize={gridSize}
+							setGridSize={setGridSize}
+							onSnapshot={handleSnapshot}
+							onBest={handleBest}
+							visionRange={visionRange}
+							setVisionRange={setVisionRange}
+						/>
 					</div>
 					<div>
 						<CreatureList snapshot={snapshot} gridSize={gridSize} />

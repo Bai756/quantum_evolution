@@ -1,7 +1,7 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {createEvolutionSocket} from '../api';
 
-export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize }) {
+export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize, visionRange, setVisionRange }) {
 	const [generations, setGenerations] = useState(20);
 	const [children, setChildren] = useState(10);
 	const [chance, setChance] = useState(0.2);
@@ -10,6 +10,14 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [running, setRunning] = useState(false);
 	const [quantum, setQuantum] = useState(true);
 	const wsRef = useRef(null);
+
+	useEffect(() => {
+		// lower vision range if grid size changes
+		const max = Math.max(1, Math.floor(gridSize / 2));
+		if (visionRange > max) {
+			setVisionRange(max);
+		}
+	}, [gridSize]);
 
 	function handleRunEvolution() {
 		// close previous stream if any
@@ -24,6 +32,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			repeats: Number(repeats),
 			elites: Number(elites),
 			grid_size: Number(gridSize || 9),
+			vision_range: Number(visionRange || Math.floor(gridSize/2)),
 		};
 		setRunning(true);
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
@@ -135,13 +144,23 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			<label>
 				Grid Size: {gridSize}
 				<br/>
-				<input
-					type="range"
-					min="5"
-					max="15"
-					value={gridSize}
-					onChange={(e) => setGridSize(Number(e.target.value))}
-				/>
+				<input type="range"
+					   min="5"
+					   max="15"
+					   value={gridSize}
+					   onChange={(e) => setGridSize(Number(e.target.value))} />
+			</label>
+
+			<br/>
+
+			<label>
+				Vision Range: {visionRange}
+				<br/>
+				<input type="range"
+					   min="1"
+					   max={Math.max(1, Math.floor(gridSize/2))}
+					   value={visionRange}
+					   onChange={(e) => setVisionRange(Number(e.target.value))} />
 			</label>
 
 			<div style={{ marginTop: 12, display: 'flex', gap: 8 }}>

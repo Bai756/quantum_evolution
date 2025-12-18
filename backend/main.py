@@ -35,6 +35,7 @@ class RunParams(BaseModel):
     repeats: int
     elites: int
     grid_size: int
+    vision_range: int
 
 
 class EvolutionResult(BaseModel):
@@ -87,7 +88,7 @@ async def ws_evolution(ws: WebSocket):
         )
         await ws.send_json({"simulation": True, **snap.model_dump()})
 
-    async def sim_loop(grid_size):
+    async def sim_loop(grid_size, vision_range):
         last_version = -1
         env = None
         runner = None
@@ -118,7 +119,8 @@ async def ws_evolution(ws: WebSocket):
                     env = Environment(fresh, s=grid_size)
                     env.generate_food()
 
-                vision = env.get_sight(grid_size//2)
+                vision = env.get_sight(vision_range)
+
                 if quantum:
                     action = runner.get_action(env.player.angles, vision)
                 else:
@@ -150,13 +152,13 @@ async def ws_evolution(ws: WebSocket):
         init_payload = await ws.receive_json()
         params = RunParams(**init_payload)
 
-        sim_task = asyncio.create_task(sim_loop(params.grid_size))
+        sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range))
 
         best_fitness = float("-inf")
         best_final = None
 
         if quantum:
-            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size):
+            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
@@ -167,7 +169,7 @@ async def ws_evolution(ws: WebSocket):
                 current_best["generation"] = gen + 1
                 current_best["version"] += 1
         else:
-            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size):
+            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)

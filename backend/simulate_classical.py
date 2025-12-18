@@ -4,11 +4,12 @@ import random
 import numpy as np
 
 
-def simulate(c, runner, seed=None, steps=10, grid_size=9):
+def simulate(c, runner, seed=None, steps=10, grid_size=9, vision_range=None):
     env = Environment(c, s=grid_size, seed=seed)
     env.generate_food()
+    vr = vision_range if vision_range is not None else grid_size // 2
     for i in range(steps):
-        action = runner.get_action(env.get_sight(n=grid_size//2))
+        action = runner.get_action(env.get_sight(n=vr))
         _ = env.step(action)
         # print(repr(env))
 
@@ -38,11 +39,11 @@ def mutate_classical(creature, chance, sigma=1):
     return Creature(model=ClassicalRunner(weights=new_weights))
 
 
-def evaluate_average(c, runner, repeats=3, grid_size=9):
+def evaluate_average(c, runner, repeats=3, grid_size=9, vision_range=None):
     total = 0.0
     for r in range(repeats):
         seed = random.randint(0, 9999999)
-        _, f = simulate(c, runner, seed=seed, grid_size=grid_size)
+        _, f = simulate(c, runner, seed=seed, grid_size=grid_size, vision_range=vision_range)
         total += f
     return total / repeats
 
