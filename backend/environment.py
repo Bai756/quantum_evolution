@@ -50,7 +50,7 @@ class Creature:
 
 
 class Environment:
-    def __init__(self, creature, s=9, seed=None, max_energy=5):
+    def __init__(self, creature, s=9, seed=None, max_energy=5, wall_density=0.0):
         self.size = s
         self.grid = [[0] * self.size for i in range(self.size)]
         self.player = creature
@@ -58,14 +58,18 @@ class Environment:
         self.grid[s//2][s//2] = 1
         self.player.max_energy = max_energy
         self.player.energy = self.player.max_energy
+        self.wall_density = wall_density
 
         if seed:
             random.seed(seed)
         else:
             random.seed()
 
+        if self.wall_density > 0.0:
+            self.generate_walls(self.wall_density)
+
     def __repr__(self):
-        symbols = {0: '.', 1: 'C', 2: 'F'}
+        symbols = {0: '.', 1: 'C', 2: 'F', 3: '#'}
         txt = ""
         for row in self.grid:
             for square in row:
@@ -86,9 +90,22 @@ class Environment:
 
     def generate_food(self):
         num_food = math.ceil(self.size ** 2 / 9)
-        chosen = random.sample(self.empty_positions(), num_food)
+        empty = self.empty_positions()
+        num_food = min(num_food, len(empty))
+        chosen = random.sample(empty, num_food)
         for i, j in chosen:
             self.grid[i][j] = 2
+
+    def generate_walls(self, density):
+        total = self.size ** 2
+        desired = int(round(density * total))
+        if desired <= 0:
+            return
+        empty = self.empty_positions()
+        desired = min(desired, len(empty))
+        chosen = random.sample(empty, desired)
+        for i, j in chosen:
+            self.grid[i][j] = 3
 
     def step(self, action):
         ate = False
@@ -113,20 +130,24 @@ class Environment:
             if self.in_bounds(new):
                 old = self.player.pos
                 x, y = new
-                if self.grid[x][y] == 2:
-                    ate = True
-                    self.player.food_eaten += 1
-                    self.player.energy += 5
+                # If there's a wall, block movement
+                if self.grid[x][y] == 3:
+                    moved = False
+                else:
+                    if self.grid[x][y] == 2:
+                        ate = True
+                        self.player.food_eaten += 1
+                        self.player.energy += 5
 
-                self.grid[old[0]][old[1]] = 0
-                self.grid[x][y] = 1
-                self.player.pos = new
-                if new not in self.player.visited_positions:
-                    self.player.visited_positions.append(new)
-                moved = True
+                    self.grid[old[0]][old[1]] = 0
+                    self.grid[x][y] = 1
+                    self.player.pos = new
+                    if new not in self.player.visited_positions:
+                        self.player.visited_positions.append(new)
+                    moved = True
 
-                # consume energy on successful forward moves
-                self.player.energy = max(0, self.player.energy - 1)
+                    # consume energy on successful forward moves
+                    self.player.energy = max(0, self.player.energy - 1)
         elif action == 2:
             self.player.turn_left()
         elif action == 3:
@@ -154,6 +175,7 @@ class Environment:
         GREEN = (50, 200, 50)
         GRID_COLOR = (180, 180, 180)
         TRIANGLE = (0, 0, 0)
+        WALL_COLOR = (110, 110, 110)
 
         for row in range(self.size):
             for col in range(self.size):
@@ -164,6 +186,8 @@ class Environment:
                     color = BLUE
                 elif val == 2:
                     color = GREEN
+                elif val == 3:
+                    color = WALL_COLOR
                 else:
                     color = WHITE
                 rect = pg.Rect(col * cell_size, row * cell_size, cell_size, cell_size)
@@ -223,7 +247,9 @@ class Environment:
                     dir_list.append(2)
                 else:
                     cell = self.grid[r][c]
-                    if cell == 2:
+                    if cell == 3:
+                        dir_list.append(2)
+                    elif cell == 2:
                         # food
                         dir_list.append(1)
                     else:
