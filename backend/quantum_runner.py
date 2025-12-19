@@ -110,10 +110,14 @@ class QuantumRunner:
             # qc.rx((pi / 2) * s, i)
 
             # initialize a state directly based on s
-            if s >= 0:
-                theta = pi * s
-                state = [math.cos(theta / 2), math.sin(theta / 2)]
-                qc.initialize(state, i)
+            # if s >= 0:
+            #     theta = pi * s
+            #     state = [math.cos(theta / 2), math.sin(theta / 2)]
+            #     qc.initialize(state, i)
+
+            # -1 is 0, 0 is pi/2, 1 is pi scale
+            theta = (pi / 2) * (s + 1)
+            qc.rx(theta, i)
 
     def get_action(self, angles, vision):
         if len(angles) < len(self.parameters):

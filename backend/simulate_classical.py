@@ -35,7 +35,7 @@ def simulate(c, runner, seed=None, steps=20, grid_size=9, vision_range=None, max
     return c, fitness
 
 
-def mutate_classical(creature, chance, sigma=1):
+def mutate_classical(creature, chance, sigma=0.2):
     weights = creature.model.get_weights()
     new_weights = []
     for w in weights:
@@ -79,10 +79,6 @@ def evolution(generations, children, chance, repeats, elites):
             print(f"gen {gen}: best fitness {cand_with_fit[0][1]:.1f}, 2nd {cand_with_fit[1][1]:.1f}, 3rd {cand_with_fit[2][1]:.1f}")
 
         parents = [cand_with_fit[j][0] for j in range(min(elites, len(population)))]
-
-    print("Final parents:")
-    for p in parents:
-        print(p.model.get_weights())
 
     # return the weights of the final parents
     return [p.model.get_weights() for p in parents]

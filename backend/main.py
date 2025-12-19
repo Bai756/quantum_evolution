@@ -86,6 +86,15 @@ async def ws_evolution(ws: WebSocket):
 
     sim_stop_event = asyncio.Event()
 
+    async def safe_send(data):
+        try:
+            await ws.send_json(data)
+            return True
+        except (WebSocketDisconnect, RuntimeError, ConnectionResetError, asyncio.CancelledError):
+            return False
+        except Exception:
+            return False
+
     async def send_simulation_snapshot(env, holder):
         snap = creature_to_snapshot(
             env.player,
@@ -93,7 +102,7 @@ async def ws_evolution(ws: WebSocket):
             holder["fitness"],
             holder["generation"],
         )
-        await ws.send_json({"simulation": True, **snap.model_dump()})
+        return await safe_send({"simulation": True, **snap.model_dump()})
 
     def _clone_creature_for_run(base: Creature):
         if quantum:
@@ -164,9 +173,7 @@ async def ws_evolution(ws: WebSocket):
             return
 
     async def send_best(gen, creature, fitness):
-        await ws.send_json(
-            {"best": {"fitness": fitness}, "generation": gen}
-        )
+        return await safe_send({"best": {"fitness": fitness}, "generation": gen})
 
     sim_task = None
 
@@ -184,7 +191,9 @@ async def ws_evolution(ws: WebSocket):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
-                    await send_best(gen + 1, creature, fitness)
+                    ok = await send_best(gen + 1, creature, fitness)
+                    if not ok:
+                        break
 
                 current_best["creature"] = creature
                 current_best["fitness"] = fitness
@@ -195,7 +204,9 @@ async def ws_evolution(ws: WebSocket):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
-                    await send_best(gen + 1, creature, fitness)
+                    ok = await send_best(gen + 1, creature, fitness)
+                    if not ok:
+                        break
 
                 current_best["creature"] = creature
                 current_best["fitness"] = fitness
@@ -211,23 +222,25 @@ async def ws_evolution(ws: WebSocket):
 
         # Send a final best
         await send_best(final_gen, final_creature, final_fitness)
-        await ws.send_json({"done": True})
+        await safe_send({"done": True})
 
         # Keep connection open to expect a {"reset_simulation": true}
         while True:
             msg = await ws.receive_json()
-            if isinstance(msg, dict) and msg.get("reset_simulation"):
+            if msg.get("reset_simulation"):
                 reset_best_simulation()
-                await ws.send_json({"reset_acknowledge": True})
+                ok = await safe_send({"reset_acknowledge": True})
+                if not ok:
+                    break
 
     except WebSocketDisconnect:
         return
-    except Exception as exc:
+    except Exception:
+        sim_stop_event.set()
         try:
-            await ws.send_json({"error": str(exc)})
-        finally:
-            sim_stop_event.set()
             await ws.close()
+        except Exception:
+            pass
     finally:
         sim_stop_event.set()
         try:
@@ -238,3 +251,7 @@ async def ws_evolution(ws: WebSocket):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# TODO:
+# Make sigma a parameter in mutate functions
+
