@@ -5,6 +5,7 @@ const CELL_SIZE = 40;
 
 export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 	const canvasReference = useRef(null);
+	const canvasContainerRef = useRef(null);
 	const [creature, setCreature] = useState(null);
 	const [lastGen, setLastGen] = useState(null);
 	const [lastFitness, setLastFitness] = useState(null);
@@ -56,6 +57,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 
 	useEffect(() => {
 		const canvasElement = canvasReference.current;
+		const container = canvasContainerRef.current;
 		if (!canvasElement || !creature) {
 			return;
 		}
@@ -65,6 +67,11 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 		const totalSizePx = CELL_SIZE * size;
 		canvasElement.width = totalSizePx;
 		canvasElement.height = totalSizePx;
+
+		// adjust container size to be same as canvas
+		if (container) {
+			container.style.width = totalSizePx + 'px';
+		}
 
 		drawingContext.clearRect(0, 0, totalSizePx, totalSizePx);
 
@@ -176,21 +183,23 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 					</div>
 				)}
 			</div>
-			<canvas
-				ref={canvasReference}
-				style={{ border: '1px solid #dddddd', display: 'block' }}
-				aria-label="Creature grid"
-			/>
-			{maxEnergy != null && energy != null && (
-				<div style={{ marginTop: 8 }}>
-					<div style={{ height: 8, width: 200, background: '#eee', borderRadius: 4 }}>
-						<div style={{ width: `${Math.round(energyPercent*100)}%`, height: '100%', background: '#3264ff', borderRadius: 4 }} />
+			<div ref={canvasContainerRef} style={{ margin: '0 auto', textAlign: 'center' }}>
+				<canvas
+					ref={canvasReference}
+					style={{ border: '1px solid #dddddd', display: 'block' }}
+					aria-label="Creature grid"
+				/>
+				{maxEnergy != null && energy != null && (
+					<div style={{ marginTop: 8 }}>
+						<div style={{ height: 8, width: '100%', background: '#eee', borderRadius: 4 }}>
+							<div style={{ width: `${Math.round(energyPercent*100)}%`, height: '100%', background: '#3264ff', borderRadius: 4 }} />
+						</div>
+						<div style={{ marginTop: 4 }}>
+							Energy: {energy} / {maxEnergy}
+						</div>
 					</div>
-					<div style={{ marginTop: 4 }}>
-						Energy: {energy} / {maxEnergy}
-					</div>
-				</div>
-			)}
+				)}
+			</div>
 		</div>
 	);
 }

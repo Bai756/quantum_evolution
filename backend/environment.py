@@ -96,7 +96,16 @@ class Environment:
 
         # If energy is depleted action is ignored
         if self.player.energy <= 0:
-            pass
+            return {
+                "action": action,
+                "moved": False,
+                "ate": False,
+                "position": self.player.pos,
+                "orientation": self.player.orientation,
+                "energy": self.player.energy,
+                "max_energy": self.player.max_energy
+            }
+
         if action == 0:
             pass
         elif action == 1:

@@ -20,8 +20,8 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			setVisionRange(max);
 		}
 		// limit max moves size
-		if (maxMoves > gridSize * 2) {
-			setMaxMoves(gridSize * 2);
+		if (maxMoves > gridSize) {
+			setMaxMoves(gridSize);
 		}
 	}, [gridSize]);
 
@@ -188,7 +188,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				<br/>
 				<input type="range"
 					   min="1"
-					   max={Math.max(1, gridSize * 2)}
+					   max={Math.max(1, gridSize)}
 					   value={maxMoves}
 					   onChange={(e) => setMaxMoves(Number(e.target.value))} />
 			</label>

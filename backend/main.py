@@ -149,9 +149,15 @@ async def ws_evolution(ws: WebSocket):
                 env.step(action)
                 await send_simulation_snapshot(env, holder)
 
+                if env.player.energy <= 0:
+                    print("No energy, simulation done")
+                    sim_stop_event.set()
+                    await send_simulation_snapshot(env, holder)
+                    continue
+
                 await asyncio.sleep(0.5)
                 if not env.has_food():
-                    print("Simulation: all food eaten, done")
+                    print("All food eaten, simulation done")
                     sim_stop_event.set()
         except asyncio.CancelledError:
             return

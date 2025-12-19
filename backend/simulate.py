@@ -10,6 +10,8 @@ def simulate(c, runner, seed=None, steps=20, grid_size=9, vision_range=None, max
     for i in range(steps):
         action = runner.get_action(c.angles, env.get_sight(n=vr))
         _ = env.step(action)
+        if env.player.energy <= 0:
+            break
         # print(repr(env))
 
     # large bonus for clearing all food and more for eating food
