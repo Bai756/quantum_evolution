@@ -82,6 +82,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 		const COLOR_FOOD = '#32c832';
 		const GRID_LINE_COLOR = '#b4b4b4';
 		const TRIANGLE_COLOR = '#000000';
+		const WALL_COLOR = '#777777';
 
 		for (let row = 0; row < size; row++) {
 			for (let col = 0; col < size; col++) {
@@ -91,6 +92,8 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 					fill = COLOR_CREATURE;
 				} else if (value === 2) {
 					fill = COLOR_FOOD;
+				} else if (value === 3) {
+					fill = WALL_COLOR;
 				}
 				drawingContext.fillStyle = fill;
 				drawingContext.fillRect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE);
@@ -113,9 +116,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 			drawingContext.stroke();
 		}
 
-		const playerPosition = Array.isArray(creature.pos)
-			? creature.pos
-			: [Math.floor(size / 2), Math.floor(size / 2)];
+		const playerPosition = creature.pos;
 		const row = playerPosition[0];
 		const col = playerPosition[1];
 		const orientation = creature.orientation;

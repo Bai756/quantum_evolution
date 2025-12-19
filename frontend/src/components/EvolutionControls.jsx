@@ -11,6 +11,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [quantum, setQuantum] = useState(true);
 	const [done, setDone] = useState(false);
 	const [maxMoves, setMaxMoves] = useState(5);
+	const [wallDensity, setWallDensity] = useState(0.0);
 	const wsRef = useRef(null);
 
 	useEffect(() => {
@@ -41,6 +42,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			grid_size: Number(gridSize),
 			vision_range: Number(visionRange || Math.floor(gridSize/2)),
 			max_moves: Number(maxMoves),
+			wall_density: Number(wallDensity),
 		};
 		setRunning(true);
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
@@ -179,6 +181,19 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   max={Math.max(1, Math.floor(gridSize/2))}
 					   value={visionRange}
 					   onChange={(e) => setVisionRange(Number(e.target.value))} />
+			</label>
+
+			<br/>
+
+			<label>
+				Wall density: {wallDensity}
+				<br/>
+				<input type="range"
+					   min="0"
+					   max="0.5"
+					   step="0.01"
+					   value={wallDensity}
+					   onChange={(e) => setWallDensity(Number(e.target.value))} />
 			</label>
 
 			<br/>

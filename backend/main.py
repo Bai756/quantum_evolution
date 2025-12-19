@@ -41,6 +41,7 @@ class RunParams(BaseModel):
     grid_size: int
     vision_range: int
     max_moves: int
+    wall_density: float
 
 
 class EvolutionResult(BaseModel):
@@ -110,7 +111,7 @@ async def ws_evolution(ws: WebSocket):
         current_best["version"] += 1
         sim_stop_event.clear()
 
-    async def sim_loop(grid_size, vision_range, max_moves):
+    async def sim_loop(grid_size, vision_range, max_moves, wall_density):
         last_version = -1
         env = None
         runner = None
@@ -118,7 +119,7 @@ async def ws_evolution(ws: WebSocket):
         try:
             while True:
                 if sim_stop_event.is_set():
-                    # Wait (without busy looping) until someone resets.
+                    # Wait until resets
                     await asyncio.sleep(0.1)
                     continue
 
@@ -136,7 +137,7 @@ async def ws_evolution(ws: WebSocket):
                     base = holder["creature"]
                     fresh, runner = _clone_creature_for_run(base)
 
-                    env = Environment(fresh, s=grid_size, max_energy=max_moves)
+                    env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
                     env.generate_food()
 
                 vision = env.get_sight(vision_range)
@@ -173,13 +174,13 @@ async def ws_evolution(ws: WebSocket):
         init_payload = await ws.receive_json()
         params = RunParams(**init_payload)
 
-        sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range, params.max_moves))
+        sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range, params.max_moves, params.wall_density))
 
         best_fitness = float("-inf")
         best_final = None
 
         if quantum:
-            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves):
+            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves, params.wall_density):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
@@ -190,7 +191,7 @@ async def ws_evolution(ws: WebSocket):
                 current_best["generation"] = gen + 1
                 current_best["version"] += 1
         else:
-            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves):
+            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves, params.wall_density):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)

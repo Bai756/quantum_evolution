@@ -244,16 +244,18 @@ class Environment:
                 r = row + dr * i
                 c = col + dc * i
                 if not self.in_bounds((r, c)):
+                    # treat out of bounds as wall
                     dir_list.append(2)
                 else:
                     cell = self.grid[r][c]
                     if cell == 3:
+                        # wall
                         dir_list.append(2)
                     elif cell == 2:
                         # food
                         dir_list.append(1)
                     else:
-                        # empty or creature
+                        # empty
                         dir_list.append(0)
             blocks.append(dir_list)
 

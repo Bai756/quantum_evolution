@@ -5,7 +5,7 @@ from simulate import QuantumRunner, mutate, evaluate_average
 from environment import Creature
 from simulate_classical import ClassicalRunner, mutate_classical, evaluate_average as evaluate_average_classical
 
-async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves):
+async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density):
     runner = QuantumRunner()
 
     base_angles1 = [random.uniform(-12 * pi, 12 * pi) for _ in range(len(runner.parameters))]
@@ -22,7 +22,7 @@ async def evolution_async(generations, children, chance, repeats, elites, grid_s
         cand_with_fit = []
 
         for c in candidates:
-            fit = await asyncio.to_thread(evaluate_average, c, runner, repeats, grid_size, vision_range, max_moves)
+            fit = await asyncio.to_thread(evaluate_average, c, runner, repeats, grid_size, vision_range, max_moves, wall_density)
             cand_with_fit.append((c, fit))
             await asyncio.sleep(0)
 
@@ -33,7 +33,7 @@ async def evolution_async(generations, children, chance, repeats, elites, grid_s
 
         parents = [cand_with_fit[j][0] for j in range(min(elites, len(cand_with_fit)))]
 
-async def evolution_classical_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves):
+async def evolution_classical_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density):
     parents = [Creature(model=ClassicalRunner()) for _ in range(elites)]
 
     for gen in range(generations):
@@ -47,7 +47,7 @@ async def evolution_classical_async(generations, children, chance, repeats, elit
         candidates = parents + population
         cand_with_fit = []
         for c in candidates:
-            fit = await asyncio.to_thread(evaluate_average_classical, c, c.model, repeats, grid_size, vision_range, max_moves)
+            fit = await asyncio.to_thread(evaluate_average_classical, c, c.model, repeats, grid_size, vision_range, max_moves, wall_density)
             cand_with_fit.append((c, fit))
             await asyncio.sleep(0)
 
