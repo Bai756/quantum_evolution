@@ -36,6 +36,7 @@ class RunParams(BaseModel):
     generations: int
     children: int
     chance: float
+    sigma: float
     repeats: int
     elites: int
     grid_size: int
@@ -77,7 +78,7 @@ async def ws_evolution(ws: WebSocket):
     q = ws.query_params.get("quantum", "1")
     quantum = q.lower() in ("1", "true")
 
-    current_best = {
+    current_best: dict = {
         "creature": None,
         "fitness": 0.0,
         "generation": 0,
@@ -187,7 +188,7 @@ async def ws_evolution(ws: WebSocket):
         best_final = None
 
         if quantum:
-            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves, params.wall_density):
+            async for gen, creature, fitness in evolution_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves, params.wall_density, params.sigma):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
@@ -200,7 +201,7 @@ async def ws_evolution(ws: WebSocket):
                 current_best["generation"] = gen + 1
                 current_best["version"] += 1
         else:
-            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves, params.wall_density):
+            async for gen, creature, fitness in evolution_classical_async(params.generations, params.children, params.chance, params.repeats, params.elites, params.grid_size, params.vision_range, params.max_moves, params.wall_density, params.sigma):
                 if fitness >= best_fitness:
                     best_fitness = fitness
                     best_final = (creature, fitness, gen + 1)
@@ -253,5 +254,5 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # TODO:
-# Make sigma a parameter in mutate functions
-
+# allow user to download/copy best creature parameters after evolution
+# allow user to upload/paste creature parameters to run simulatio

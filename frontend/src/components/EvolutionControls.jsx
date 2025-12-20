@@ -12,6 +12,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [done, setDone] = useState(false);
 	const [maxMoves, setMaxMoves] = useState(5);
 	const [wallDensity, setWallDensity] = useState(0.0);
+	const [sigma, setSigma] = useState(3);
 	const wsRef = useRef(null);
 
 	useEffect(() => {
@@ -37,6 +38,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			generations: Number(generations),
 			children: Number(children),
 			chance: Number(chance),
+			sigma: Number(sigma),
 			repeats: Number(repeats),
 			elites: Number(elites),
 			grid_size: Number(gridSize),
@@ -82,7 +84,12 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			<label>
 				Mode:
 				<br/>
-				<select value={quantum ? 'quantum' : 'classical'} onChange={(e) => setQuantum(e.target.value === 'quantum')}>
+				<select value={quantum ? 'quantum' : 'classical'} onChange={(e) => {
+					// set default value of sigma based on if quantum or classical
+					const isQuantum = e.target.value === 'quantum';
+					setQuantum(isQuantum);
+					setSigma(isQuantum ? 3 : 0.2);
+				}}>
 					<option value="quantum">Quantum</option>
 					<option value="classical">Classical</option>
 				</select>
@@ -119,7 +126,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			<br/>
 
 			<label>
-				Mutation chance: {chance}
+				Chance of mutation: {chance}
 				<br/>
 				<input
 					type="range"
@@ -128,6 +135,21 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					step="0.01"
 					value={chance}
 					onChange={(e) => setChance(e.target.value)}
+				/>
+			</label>
+
+			<br/>
+
+			<label>
+				Sigma (mutation magnitude): {sigma}
+				<br/>
+				<input
+					type="range"
+					min="0"
+					max={quantum ? "12" : "1"}
+					step={quantum ? "0.1" : "0.01"}
+					value={sigma}
+					onChange={(e) => setSigma(e.target.value)}
 				/>
 			</label>
 

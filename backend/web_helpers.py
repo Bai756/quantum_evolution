@@ -5,7 +5,7 @@ from simulate import QuantumRunner, mutate, evaluate_average
 from environment import Creature
 from simulate_classical import ClassicalRunner, mutate_classical, evaluate_average as evaluate_average_classical
 
-async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density):
+async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density, sigma):
     runner = QuantumRunner()
 
     base_angles1 = [random.uniform(-12 * pi, 12 * pi) for _ in range(len(runner.parameters))]
@@ -16,7 +16,7 @@ async def evolution_async(generations, children, chance, repeats, elites, grid_s
         population = []
         for j in range(len(parents)):
             for _ in range(children):
-                population.append(mutate(parents[j], chance))
+                population.append(mutate(parents[j], chance, sigma=sigma))
 
         candidates = parents + population
         cand_with_fit = []
@@ -33,7 +33,7 @@ async def evolution_async(generations, children, chance, repeats, elites, grid_s
 
         parents = [cand_with_fit[j][0] for j in range(min(elites, len(cand_with_fit)))]
 
-async def evolution_classical_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density):
+async def evolution_classical_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density, sigma):
     parents = [Creature(model=ClassicalRunner()) for _ in range(elites)]
 
     for gen in range(generations):
@@ -41,7 +41,7 @@ async def evolution_classical_async(generations, children, chance, repeats, elit
 
         for j in range(len(parents)):
             for _ in range(children):
-                child = mutate_classical(parents[j], chance)
+                child = mutate_classical(parents[j], chance, sigma=sigma)
                 population.append(child)
 
         candidates = parents + population
