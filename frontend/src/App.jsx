@@ -7,6 +7,7 @@ const App = () => {
 	const [snapshot, setSnapshot] = useState(null);
 	const [gridSize, setGridSize] = useState(9);
 	const [visionRange, setVisionRange] = useState(Math.floor(9 / 2));
+	const [bestGenomeText, setBestGenomeText] = useState('');
 
 	useEffect(() => {
 		// lower visionRange if gridSize changes
@@ -24,6 +25,9 @@ const App = () => {
 	}
 	function handleBest(best) {
 		setSnapshot({ best });
+		if (best && typeof best.genome_text === 'string') {
+			setBestGenomeText(best.genome_text);
+		}
 	}
 
 	return (
@@ -41,6 +45,7 @@ const App = () => {
 							onBest={handleBest}
 							visionRange={visionRange}
 							setVisionRange={setVisionRange}
+							bestGenomeText={bestGenomeText}
 						/>
 					</div>
 					<div>

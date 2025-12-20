@@ -1,7 +1,19 @@
 import React, {useRef, useState, useEffect} from 'react';
 import {createEvolutionSocket} from '../api';
 
-export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize, visionRange, setVisionRange }) {
+function downloadTextFile(text, filename) {
+	const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	URL.revokeObjectURL(url);
+}
+
+export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize, visionRange, setVisionRange, bestGenomeText }) {
 	const [generations, setGenerations] = useState(20);
 	const [children, setChildren] = useState(10);
 	const [chance, setChance] = useState(0.2);
@@ -13,6 +25,8 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [maxMoves, setMaxMoves] = useState(5);
 	const [wallDensity, setWallDensity] = useState(0.0);
 	const [sigma, setSigma] = useState(3);
+	const [genomeText, setGenomeText] = useState('');
+	const [genomeError, setGenomeError] = useState('');
 	const wsRef = useRef(null);
 
 	useEffect(() => {
@@ -28,6 +42,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	}, [gridSize]);
 
 	function handleRunEvolution() {
+		setGenomeError('');
 		setDone(false);
 		// close previous stream if any
 		if (wsRef.current) {
@@ -50,6 +65,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
 			if (msg.error) {
 				console.error('WS evolution error:', msg.error);
+				setGenomeError(String(msg.error));
 				setRunning(false);
 				setDone(false);
 			} else if (msg.best) {
@@ -75,6 +91,71 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 		} catch (e) {
 			console.error('Failed to send reset_simulation:', e);
 		}
+	}
+
+	async function handleCopyBestGenome() {
+		setGenomeError('');
+		try {
+			if (!bestGenomeText) {
+				setGenomeError('No best genome yet. Run evolution first.');
+				return;
+			}
+			await navigator.clipboard.writeText(bestGenomeText);
+		} catch (e) {
+			console.error('Failed to copy genome:', e);
+			setGenomeError('Failed to copy genome to clipboard.');
+		}
+	}
+
+	function handleDownloadBestGenome() {
+		setGenomeError('');
+		if (!bestGenomeText) {
+			setGenomeError('No best genome yet. Run evolution first.');
+			return;
+		}
+		const mode = quantum ? 'quantum' : 'classical';
+		downloadTextFile(bestGenomeText, `best_${mode}_genome.txt`);
+	}
+
+	function handleLoadBestIntoTextbox() {
+		setGenomeError('');
+		if (!bestGenomeText) {
+			setGenomeError('No best genome yet. Run evolution first.');
+			return;
+		}
+		setGenomeText(bestGenomeText);
+	}
+
+	function handleRunPastedGenome() {
+		setGenomeError('');
+		setDone(false);
+		// close previous stream if any
+		if (wsRef.current) {
+			try { wsRef.current.close(); } catch (_) {}
+			wsRef.current = null;
+		}
+		const payload = {
+			run_genome: true,
+			genome_text: String(genomeText),
+			grid_size: Number(gridSize),
+			vision_range: Number(visionRange || Math.floor(gridSize/2)),
+			max_moves: Number(maxMoves),
+			wall_density: Number(wallDensity),
+		};
+		setRunning(true);
+
+		wsRef.current = createEvolutionSocket(payload, (msg) => {
+			if (msg.error) {
+				console.error('WS genome run error:', msg.error);
+				setGenomeError(String(msg.error));
+				setRunning(false);
+				setDone(false);
+			} else if (msg.simulation) {
+				onSnapshot(msg);
+			} else {
+				// ignore
+			}
+		}, quantum);
 	}
 
 	return (
@@ -141,7 +222,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			<br/>
 
 			<label>
-				Sigma (mutation magnitude): {sigma}
+				Mutation magnitude: {sigma}
 				<br/>
 				<input
 					type="range"
@@ -240,6 +321,34 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					</button>
 				)}
 			</div>
+
+			<hr style={{ margin: '16px 0' }} />
+			<h4>Genome</h4>
+			<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+				<button onClick={handleCopyBestGenome} disabled={!bestGenomeText}>Copy genome</button>
+				<button onClick={handleDownloadBestGenome} disabled={!bestGenomeText}>Download genome</button>
+				<button onClick={handleLoadBestIntoTextbox} disabled={!bestGenomeText}>Load best → textbox</button>
+			</div>
+
+			<div style={{ marginTop: 8 }}>
+				<textarea
+					rows={8}
+					style={{ width: '100%', fontFamily: 'monospace' }}
+					placeholder={'Paste genome text here...'}
+					value={genomeText}
+					onChange={(e) => setGenomeText(e.target.value)}
+				/>
+			</div>
+
+			<div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+				<button onClick={handleRunPastedGenome} disabled={!genomeText}>Run pasted genome</button>
+			</div>
+
+			{genomeError && (
+				<div style={{ marginTop: 8, color: 'crimson', whiteSpace: 'pre-wrap' }}>
+					{genomeError}
+				</div>
+			)}
 		</div>
 	);
 }

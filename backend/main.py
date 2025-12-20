@@ -7,6 +7,85 @@ from typing import List
 from simulate import Creature, Environment, QuantumRunner
 from web_helpers import evolution_async, evolution_classical_async
 from simulate_classical import ClassicalRunner
+import numpy as np
+
+
+def create_genome_text(c: Creature, quantum):
+    if quantum:
+        angles = c.angles
+        return "quantum\n" + ",".join(str(float(a)) for a in angles)
+
+    weights = c.model.get_weights()
+
+    out_lines = ["classical"]
+    for layer_weights in weights:
+        arr = np.array(layer_weights)
+        if arr.ndim == 1:
+            out_lines.append(",".join(str(float(x)) for x in arr))
+        else:
+            for row in arr:
+                out_lines.append(",".join(str(float(x)) for x in row))
+        out_lines.append("---")
+
+    return "\n".join(out_lines)
+
+
+def read_mode(genome):
+    for line in genome.splitlines():
+        line = line.strip()
+        return line
+    return None
+
+
+def creature_from_genome_text(genome, max_energy):
+    mode = read_mode(genome)
+    if not mode:
+        raise ValueError("Genome missing mode")
+    if mode not in ["quantum", "classical"]:
+        raise ValueError(f"Invalid mode: {mode}")
+
+    raw_lines = [ln.rstrip("\n") for ln in genome.splitlines()]
+
+    # drop empty lines
+    lines = []
+    for line in raw_lines:
+        line = line.strip()
+        if line == "":
+            continue
+        lines.append(line)
+
+    # remove the mode line
+    if lines:
+        lines = lines[1:]
+
+    if mode == "quantum":
+        csv = lines[0]
+        angles = [float(x) for x in csv.split(",")]
+        return Creature(angles=angles, max_energy=max_energy)
+
+    weights = []
+    current_weight = []
+    for line in lines:
+        line = line.strip()
+        if line == "---":
+            if current_weight:
+                arr = np.array(current_weight, dtype=float)
+                if arr.ndim == 2 and arr.shape[0] == 1:
+                    arr = arr.flatten()
+                weights.append(arr)
+                current_weight = []
+        else:
+            current_weight.append([float(x) for x in line.split(",")])
+
+    if current_weight:
+        arr = np.array(current_weight, dtype=float)
+        if arr.ndim == 2 and arr.shape[0] == 1:
+            arr = arr.flatten()
+        weights.append(arr)
+
+    runner = ClassicalRunner(weights=weights)
+    return Creature(model=runner, max_energy=max_energy)
+
 
 class CreatureSnapshot(BaseModel):
     pos: List[int]
@@ -39,6 +118,15 @@ class RunParams(BaseModel):
     sigma: float
     repeats: int
     elites: int
+    grid_size: int
+    vision_range: int
+    max_moves: int
+    wall_density: float
+
+
+class GenomeParams(BaseModel):
+    run_genome: bool
+    genome_text: str
     grid_size: int
     vision_range: int
     max_moves: int
@@ -145,6 +233,9 @@ async def ws_evolution(ws: WebSocket):
                     last_version = holder["version"]
 
                     base = holder["creature"]
+                    if not isinstance(base, Creature):
+                        await asyncio.sleep(0.1)
+                        continue
                     fresh, runner = _clone_creature_for_run(base)
 
                     env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
@@ -174,12 +265,53 @@ async def ws_evolution(ws: WebSocket):
             return
 
     async def send_best(gen, creature, fitness):
-        return await safe_send({"best": {"fitness": fitness}, "generation": gen})
+        text = create_genome_text(creature, quantum=quantum)
+        return await safe_send({"best": {"fitness": fitness, "genome_text": text}, "generation": gen})
 
     sim_task = None
 
     try:
         init_payload = await ws.receive_json()
+
+        print("Received init payload:", init_payload)
+        # run a genome directly
+        if init_payload.get("run_genome") is True:
+            print("starting genome run")
+            params = GenomeParams(**init_payload)
+
+            try:
+                print("parsing genome")
+                genome_mode = read_mode(params.genome_text)
+                print("genome mode:", genome_mode)
+                if genome_mode == "quantum":
+                    quantum = True
+                if genome_mode == "classical":
+                    quantum = False
+                base = creature_from_genome_text(params.genome_text, max_energy=params.max_moves)
+            except Exception as e:
+                print("Failed to parse genome:", e)
+                await safe_send({"error": f"Failed to parse genome: {e}"})
+                return
+
+            print("quantum mode:", quantum)
+            print("creature:", base)
+            current_best["creature"] = base
+            current_best["fitness"] = 0.0
+            current_best["generation"] = 0
+            current_best["version"] += 1
+
+            sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range, params.max_moves, params.wall_density))
+
+            while True:
+                msg = await ws.receive_json()
+                if msg.get("reset_simulation"):
+                    reset_best_simulation()
+                    ok = await safe_send({"reset_acknowledge": True})
+                    if not ok:
+                        break
+            return
+
+        # regular evolution
         params = RunParams(**init_payload)
 
         sim_task = asyncio.create_task(sim_loop(params.grid_size, params.vision_range, params.max_moves, params.wall_density))
@@ -254,5 +386,4 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # TODO:
-# allow user to download/copy best creature parameters after evolution
-# allow user to upload/paste creature parameters to run simulatio
+# make the genome run directly better
