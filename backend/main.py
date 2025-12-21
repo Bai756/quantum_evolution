@@ -142,7 +142,7 @@ async def ws_evolution(ws: WebSocket):
     try:
         init_payload = await ws.receive_json()
 
-        visualize = init_payload.get("visualize")
+        visualize = bool(init_payload.get("visualize", False))
 
         # run a genome directly
         if init_payload.get("run_genome") is True:
@@ -163,6 +163,9 @@ async def ws_evolution(ws: WebSocket):
             current_best["fitness"] = 0.0
             current_best["generation"] = 0
             current_best["version"] += 1
+
+            # send initial best so frontend gets genome_text and optionally visualization
+            await send_best(0, base, 0.0)
 
             sim_task = asyncio.create_task(web_helpers.sim_loop(current_best, sim_stop_event, quantum, params.grid_size, params.vision_range, params.max_moves, params.wall_density, send_simulation_snapshot))
 

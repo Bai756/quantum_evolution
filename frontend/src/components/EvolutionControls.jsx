@@ -73,9 +73,6 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				setDone(false);
 			} else if (msg.best) {
 				onBest(msg.best);
-				if (msg.best.visualization) {
-					onSnapshot({best: msg.best, visualization: msg.best.visualization});
-				}
 			} else if (msg.simulation) {
 				onSnapshot(msg);
 			} else if (msg.done) {
@@ -157,6 +154,8 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				setGenomeError(String(msg.error));
 				setRunning(false);
 				setDone(false);
+			} else if (msg.best) {
+				onBest(msg.best);
 			} else if (msg.simulation) {
 				onSnapshot(msg);
 			} else {

@@ -177,6 +177,9 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 		energyPercent = Math.max(0, Math.min(1, energy / maxEnergy));
 	}
 
+	const circuitVisualisation = lastVisualization && lastVisualization.circuit ? lastVisualization.circuit : null;
+	const networkVisualisation = lastVisualization && lastVisualization.network ? lastVisualization.network : null;
+
 	return (
 		<div>
 			<div style={{ marginBottom: 8 }}>
@@ -209,10 +212,14 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 				)}
 			</div>
 
-			{showVisuals && (
+			{showVisuals && (circuitVisualisation || networkVisualisation) && (
 				<div style={{ marginTop: 12 }}>
-					{<CircuitView circuit={lastVisualization} width={520} height={140} />}
-					{<NeuralNetView network={lastVisualization} width={520} height={180} />}
+					{circuitVisualisation && (
+						<CircuitView circuit={circuitVisualisation} width={520} height={140} />
+					)}
+					{networkVisualisation && (
+						<NeuralNetView network={networkVisualisation} width={520} height={180} />
+					)}
 				</div>
 			)}
 		</div>
