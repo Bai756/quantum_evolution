@@ -59,8 +59,11 @@ def creature_from_genome_text(genome, max_energy):
         lines = lines[1:]
 
     if mode == "quantum":
-        csv = lines[0]
-        angles = [float(x) for x in csv.split(",")]
+        numbers = lines[0]
+        angles = [float(x) for x in numbers.split(",")]
+        runner = QuantumRunner()
+        if len(angles) != len(runner.parameters):
+            raise ValueError(f"Invalid number of angles for quantum runner: expected {len(runner.parameters)}, got {len(angles)}")
         return Creature(angles=angles, max_energy=max_energy)
 
     weights = []
@@ -83,7 +86,11 @@ def creature_from_genome_text(genome, max_energy):
             arr = arr.flatten()
         weights.append(arr)
 
-    runner = ClassicalRunner(weights=weights)
+    try:
+        runner = ClassicalRunner(weights=weights)
+    except Exception as e:
+        raise ValueError(f"Failed to create ClassicalRunner from weights: {e}")
+
     return Creature(model=runner, max_energy=max_energy)
 
 
@@ -386,4 +393,6 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # TODO:
-# make the genome run directly better
+# Make websocket function less long
+# Add visualization for quantum circuit and neural network
+# Make it look better

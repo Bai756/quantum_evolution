@@ -27,7 +27,9 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	const [sigma, setSigma] = useState(3);
 	const [genomeText, setGenomeText] = useState('');
 	const [genomeError, setGenomeError] = useState('');
+	const [isGenomeDragOver, setIsGenomeDragOver] = useState(false);
 	const wsRef = useRef(null);
+	const genomeFileInputRef = useRef(null);
 
 	useEffect(() => {
 		// lower vision range if grid size changes
@@ -156,6 +158,31 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				// ignore
 			}
 		}, quantum);
+	}
+
+	async function loadGenomeFromFile(file) {
+		try {
+			setGenomeError('');
+			const content = await file.text();
+			setGenomeText(String(content ?? ''));
+		} catch (e) {
+			console.error('Failed to read genome file:', e);
+			setGenomeError('Failed to read file.');
+		} finally {
+			if (genomeFileInputRef.current) {
+				genomeFileInputRef.current.value = '';
+			}
+		}
+	}
+
+	function handleGenomeDrop(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsGenomeDragOver(false);
+		const file = e.dataTransfer?.files?.[0];
+		if (file) {
+			loadGenomeFromFile(file);
+		}
 	}
 
 	return (
@@ -327,14 +354,46 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
 				<button onClick={handleCopyBestGenome} disabled={!bestGenomeText}>Copy genome</button>
 				<button onClick={handleDownloadBestGenome} disabled={!bestGenomeText}>Download genome</button>
-				<button onClick={handleLoadBestIntoTextbox} disabled={!bestGenomeText}>Load best → textbox</button>
+				<button onClick={handleLoadBestIntoTextbox} disabled={!bestGenomeText}>Load best into textbox</button>
+				<button onClick={() => genomeFileInputRef.current?.click()}>Upload genome file</button>
+				<input
+					type="file"
+					ref={genomeFileInputRef}
+					accept=".txt,text/plain"
+					style={{ display: 'none' }}
+					onChange={(e) => loadGenomeFromFile(e.target.files?.[0])}
+				/>
 			</div>
 
-			<div style={{ marginTop: 8 }}>
+			<div
+				style={{
+					marginTop: 8,
+					padding: 6,
+					borderRadius: 8,
+					border: isGenomeDragOver ? '2px dashed #646cff' : '1px solid rgba(127,127,127,0.35)',
+					background: isGenomeDragOver ? 'rgba(100,108,255,0.08)' : 'transparent',
+				}}
+				onDragEnter={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					setIsGenomeDragOver(true);
+				}}
+				onDragOver={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					setIsGenomeDragOver(true);
+				}}
+				onDragLeave={(e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					setIsGenomeDragOver(false);
+				}}
+				onDrop={handleGenomeDrop}
+			>
 				<textarea
 					rows={8}
 					style={{ width: '100%', fontFamily: 'monospace' }}
-					placeholder={'Paste genome text here...'}
+					placeholder={'Paste / drop a genome text file here...'}
 					value={genomeText}
 					onChange={(e) => setGenomeText(e.target.value)}
 				/>
