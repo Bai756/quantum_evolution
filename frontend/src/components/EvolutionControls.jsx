@@ -13,7 +13,7 @@ function downloadTextFile(text, filename) {
 	URL.revokeObjectURL(url);
 }
 
-export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize, visionRange, setVisionRange, bestGenomeText }) {
+export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGridSize, visionRange, setVisionRange, bestGenomeText, showVisuals, setShowVisuals }) {
 	const [generations, setGenerations] = useState(20);
 	const [children, setChildren] = useState(10);
 	const [chance, setChance] = useState(0.2);
@@ -62,6 +62,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			vision_range: Number(visionRange || Math.floor(gridSize/2)),
 			max_moves: Number(maxMoves),
 			wall_density: Number(wallDensity),
+			visualize: showVisuals,
 		};
 		setRunning(true);
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
@@ -72,6 +73,9 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				setDone(false);
 			} else if (msg.best) {
 				onBest(msg.best);
+				if (msg.best.visualization) {
+					onSnapshot({best: msg.best, visualization: msg.best.visualization});
+				}
 			} else if (msg.simulation) {
 				onSnapshot(msg);
 			} else if (msg.done) {
@@ -143,6 +147,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			vision_range: Number(visionRange || Math.floor(gridSize/2)),
 			max_moves: Number(maxMoves),
 			wall_density: Number(wallDensity),
+			visualize: showVisuals,
 		};
 		setRunning(true);
 
@@ -350,6 +355,13 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			</div>
 
 			<hr style={{ margin: '16px 0' }} />
+			<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+				<label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+					<input type="checkbox" checked={showVisuals} onChange={(e) => setShowVisuals(e.target.checked)} />
+					<span>Show visualization</span>
+				</label>
+			</div>
+
 			<h4>Genome</h4>
 			<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
 				<button onClick={handleCopyBestGenome} disabled={!bestGenomeText}>Copy genome</button>

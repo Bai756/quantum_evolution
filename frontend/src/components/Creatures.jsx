@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import api from '../api';
+import CircuitView from './CircuitView.jsx';
+import NeuralNetView from './NeuralNetView.jsx';
 
 const CELL_SIZE = 40;
 
-export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
+export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = true }) {
 	const canvasReference = useRef(null);
 	const canvasContainerRef = useRef(null);
 	const [creature, setCreature] = useState(null);
@@ -12,6 +14,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 	const [best, setBest] = useState(null);
 	const [energy, setEnergy] = useState(null);
 	const [maxEnergy, setMaxEnergy] = useState(null);
+	const [lastVisualization, setLastVisualization] = useState(null);
 	const initializedRef = useRef(false);
 
 	useEffect(() => {
@@ -45,6 +48,9 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 		}
 		if (snapshot.best) {
 			setBest(snapshot.best);
+			if (snapshot.best.visualization) {
+				setLastVisualization(snapshot.best.visualization);
+			}
 		}
 		if (snapshot.grid) {
 			setCreature(snapshot);
@@ -170,6 +176,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 	if (maxEnergy != null && energy != null) {
 		energyPercent = Math.max(0, Math.min(1, energy / maxEnergy));
 	}
+
 	return (
 		<div>
 			<div style={{ marginBottom: 8 }}>
@@ -201,6 +208,13 @@ export default function CreatureCanvas({ snapshot, gridSize = 10 }) {
 					</div>
 				)}
 			</div>
+
+			{showVisuals && (
+				<div style={{ marginTop: 12 }}>
+					{<CircuitView circuit={lastVisualization} width={520} height={140} />}
+					{<NeuralNetView network={lastVisualization} width={520} height={180} />}
+				</div>
+			)}
 		</div>
 	);
 }

@@ -8,6 +8,7 @@ const App = () => {
 	const [gridSize, setGridSize] = useState(9);
 	const [visionRange, setVisionRange] = useState(Math.floor(9 / 2));
 	const [bestGenomeText, setBestGenomeText] = useState('');
+	const [showVisuals, setShowVisuals] = useState(true);
 
 	useEffect(() => {
 		// lower visionRange if gridSize changes
@@ -46,10 +47,12 @@ const App = () => {
 							visionRange={visionRange}
 							setVisionRange={setVisionRange}
 							bestGenomeText={bestGenomeText}
+							showVisuals={showVisuals}
+							setShowVisuals={setShowVisuals}
 						/>
 					</div>
 					<div>
-						<CreatureList snapshot={snapshot} gridSize={gridSize} />
+						<CreatureList snapshot={snapshot} gridSize={gridSize} showVisuals={showVisuals} />
 					</div>
 				</div>
 			</main>

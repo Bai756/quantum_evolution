@@ -4,7 +4,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
-from simulate import Creature, Environment
+from environment import Creature, Environment
 import web_helpers
 
 
@@ -43,6 +43,7 @@ class RunParams(BaseModel):
     vision_range: int
     max_moves: int
     wall_density: float
+    visualize: bool
 
 
 class GenomeParams(BaseModel):
@@ -52,6 +53,7 @@ class GenomeParams(BaseModel):
     vision_range: int
     max_moves: int
     wall_density: float
+    visualize: bool
 
 
 class EvolutionResult(BaseModel):
@@ -96,7 +98,9 @@ async def ws_evolution(ws: WebSocket):
 
     sim_stop_event = asyncio.Event()
 
-    async def send_best(creature, fitness, generation):
+    visualize = False
+
+    async def send_best(generation, creature, fitness):
         data = {
             "best": {
                 "fitness": fitness,
@@ -104,6 +108,13 @@ async def ws_evolution(ws: WebSocket):
             },
             "generation": generation
         }
+
+        if visualize:
+            if quantum:
+                data["best"]["visualization"] = {"circuit": web_helpers.serialize_circuit(creature.angles)}
+            else:
+                weights = creature.model.get_weights()
+                data["best"]["visualization"] = {"network": web_helpers.weights_to_json(weights)}
         return await safe_send(data)
 
     async def safe_send(data):
@@ -130,6 +141,8 @@ async def ws_evolution(ws: WebSocket):
 
     try:
         init_payload = await ws.receive_json()
+
+        visualize = init_payload.get("visualize")
 
         # run a genome directly
         if init_payload.get("run_genome") is True:

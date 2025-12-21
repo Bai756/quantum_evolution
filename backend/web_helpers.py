@@ -4,6 +4,8 @@ from math import pi
 from simulate import QuantumRunner, mutate, evaluate_average
 from environment import Creature, Environment
 from simulate_classical import ClassicalRunner, mutate_classical, evaluate_average as evaluate_average_classical
+from quantum_runner import serialize_circuit
+from classical_runner import weights_to_json
 import numpy as np
 
 async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density, sigma):
