@@ -2,8 +2,9 @@ import asyncio
 import random
 from math import pi
 from simulate import QuantumRunner, mutate, evaluate_average
-from environment import Creature
+from environment import Creature, Environment
 from simulate_classical import ClassicalRunner, mutate_classical, evaluate_average as evaluate_average_classical
+import numpy as np
 
 async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density, sigma):
     runner = QuantumRunner()
@@ -58,3 +59,151 @@ async def evolution_classical_async(generations, children, chance, repeats, elit
             yield gen, cand_with_fit[0][0], cand_with_fit[0][1]
 
         parents = [cand_with_fit[j][0] for j in range(min(elites, len(population)))]
+
+def clone_creature_for_run(base, quantum):
+    if quantum:
+        runner = QuantumRunner()
+        angles = base.angles
+        fresh = Creature(angles=angles, max_energy=base.max_energy)
+        return fresh, runner
+
+    weights = base.model.get_weights()
+    runner = ClassicalRunner(weights=weights)
+    fresh = Creature(model=runner, max_energy=base.max_energy)
+    return fresh, runner
+
+
+async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_range, max_moves, wall_density, on_snapshot):
+    last_version = -1
+    env = None
+    runner = None
+
+    try:
+        while True:
+            if sim_stop_event.is_set():
+                await asyncio.sleep(0.1)
+                continue
+
+            holder = current_best
+            if holder.get("creature") is None:
+                await asyncio.sleep(0.1)
+                continue
+
+            if holder.get("version") != last_version:
+                print("(re)starting simulation for gen", holder.get("generation"))
+                last_version = holder.get("version")
+
+                base = holder.get("creature")
+                if not isinstance(base, Creature):
+                    await asyncio.sleep(0.1)
+                    continue
+
+                fresh, runner = clone_creature_for_run(base, quantum)
+                env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
+                env.generate_food()
+
+            vision = env.get_sight(vision_range)
+
+            if quantum:
+                action = runner.get_action(env.player.angles, vision)
+            else:
+                action = runner.get_action(vision)
+
+            env.step(action)
+            await on_snapshot(env, holder)
+
+            if env.player.energy <= 0:
+                print("No energy, simulation done")
+                sim_stop_event.set()
+                await on_snapshot(env, holder)
+                continue
+
+            await asyncio.sleep(0.5)
+            if not env.has_food():
+                print("All food eaten, simulation done")
+                sim_stop_event.set()
+    except asyncio.CancelledError:
+        return
+
+def create_genome_text(c: Creature, quantum):
+    if quantum:
+        angles = c.angles
+        return "quantum\n" + ",".join(str(float(a)) for a in angles)
+
+    weights = c.model.get_weights()
+
+    out_lines = ["classical"]
+    for layer_weights in weights:
+        arr = np.array(layer_weights)
+        if arr.ndim == 1:
+            out_lines.append(",".join(str(float(x)) for x in arr))
+        else:
+            for row in arr:
+                out_lines.append(",".join(str(float(x)) for x in row))
+        out_lines.append("---")
+
+    return "\n".join(out_lines)
+
+
+def read_mode(genome):
+    for line in genome.splitlines():
+        line = line.strip()
+        return line
+    return None
+
+
+def creature_from_genome_text(genome, max_energy):
+    mode = read_mode(genome)
+    if not mode:
+        raise ValueError("Genome missing mode")
+    if mode not in ["quantum", "classical"]:
+        raise ValueError(f"Invalid mode: {mode}")
+
+    raw_lines = [ln.rstrip("\n") for ln in genome.splitlines()]
+
+    # drop empty lines
+    lines = []
+    for line in raw_lines:
+        line = line.strip()
+        if line == "":
+            continue
+        lines.append(line)
+
+    # remove the mode line
+    if lines:
+        lines = lines[1:]
+
+    if mode == "quantum":
+        numbers = lines[0]
+        angles = [float(x) for x in numbers.split(",")]
+        runner = QuantumRunner()
+        if len(angles) != len(runner.parameters):
+            raise ValueError(f"Invalid number of angles for quantum runner: expected {len(runner.parameters)}, got {len(angles)}")
+        return Creature(angles=angles, max_energy=max_energy)
+
+    weights = []
+    current_weight = []
+    for line in lines:
+        line = line.strip()
+        if line == "---":
+            if current_weight:
+                arr = np.array(current_weight, dtype=float)
+                if arr.ndim == 2 and arr.shape[0] == 1:
+                    arr = arr.flatten()
+                weights.append(arr)
+                current_weight = []
+        else:
+            current_weight.append([float(x) for x in line.split(",")])
+
+    if current_weight:
+        arr = np.array(current_weight, dtype=float)
+        if arr.ndim == 2 and arr.shape[0] == 1:
+            arr = arr.flatten()
+        weights.append(arr)
+
+    try:
+        runner = ClassicalRunner(weights=weights)
+    except Exception as e:
+        raise ValueError(f"Failed to create ClassicalRunner from weights: {e}")
+
+    return Creature(model=runner, max_energy=max_energy)
