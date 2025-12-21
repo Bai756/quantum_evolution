@@ -3,40 +3,7 @@ from qiskit.circuit import Parameter
 from qiskit_aer import AerSimulator
 import matplotlib.pyplot as plt
 from math import pi
-from collections import Counter
 import random
-
-
-def run_tests(angles):
-    qc = QuantumCircuit(4, 2)
-    qc.rx(angles[0], 0)
-    qc.ry(angles[1], 1)
-    qc.rz(angles[2], 2)
-    qc.ry(angles[3], 3)
-
-    qc.cx(0, 2)
-    qc.cx(1, 3)
-    qc.cx(2, 3)
-    qc.cx(3, 0)
-
-    qc.cry(angles[4], 2, 0)
-    qc.crx(angles[5], 3, 1)
-
-    qc.measure([0, 1], [0, 1])
-    print(qc)
-
-    sim = AerSimulator()
-    compiled = transpile(qc, sim)
-    job = sim.run(compiled, shots=1024)
-    result = job.result()
-    counts = result.get_counts()
-
-    sorted_items = sorted(counts.items())
-    sorted_dict = dict(sorted_items)
-    labels, values = sorted_dict.keys(), sorted_dict.values()
-
-    plt.bar(labels, values)
-    plt.show()
 
 
 class QuantumRunner:
