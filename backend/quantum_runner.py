@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from math import pi
 from collections import Counter
 import random
-import math
 
 
 def run_tests(angles):
@@ -149,95 +148,72 @@ class QuantumRunner:
             action = 3
         return action
 
+def serialize_circuit(angles, vision=None):
+    # round params to 2 decimals
+    def r(x):
+        return float(round(float(x), 2))
 
-def test_all_angles(shots, points, batch_size):
-    import itertools
+    gates = []
+    idx = 0
 
-    runner = QuantumRunner(shots=shots)
-    sim = runner.sim
-    compiled = runner.compiled
-    params = runner.parameters
+    # vision - rx gates on qubits 0-2
+    if vision is not None:
+        for i, s in enumerate(vision):
+            theta = (pi / 2) * (s + 1)
+            gates.append({"type": "rx", "targets": [i], "param": r(theta), "index": idx})
+            idx += 1
+    else:
+        for i in range(3):
+            gates.append({"type": "rx", "targets": [i], "param": "v", "index": idx})
+            idx += 1
 
-    values = [k * pi / 6 for k in range(points)]
-    total = points ** len(params)
+    # Just following the circuit structure
+    for p in range(0, 3):
+        gates.append({"type": "cry", "controls": [p], "targets": [3], "param": r(angles[p]), "index": idx})
+        idx += 1
 
-    extraordinary = []  # (angles_tuple, mode_bitstring, fraction)
-    threshold = .5
+    for p in range(3, 6):
+        gates.append({"type": "cry", "controls": [p - 3], "targets": [4], "param": r(angles[p]), "index": idx})
+        idx += 1
 
-    def run_batch(batch, start_idx):
-        batch_len = len(batch)
-        parameters = {p: [combo[idx] for combo in batch] for idx, p in enumerate(params)}
+    gates.append({"type": "ry", "targets": [3], "param": r(angles[6]), "index": idx}); idx += 1
+    gates.append({"type": "rz", "targets": [3], "param": r(angles[7]), "index": idx}); idx += 1
+    gates.append({"type": "ry", "targets": [4], "param": r(angles[8]), "index": idx}); idx += 1
+    gates.append({"type": "rz", "targets": [4], "param": r(angles[9]), "index": idx}); idx += 1
 
-        job = sim.run(compiled, parameter_binds=[parameters], shots=shots)
-        result = job.result()
+    gates.append({"type": "cx", "controls": [3], "targets": [4], "index": idx}); idx += 1
+    gates.append({"type": "cx", "controls": [4], "targets": [3], "index": idx}); idx += 1
 
-        for i in range(batch_len):
-            counts = result.get_counts(i)
-            idx = start_idx + i + 1
+    gates.append({"type": "ry", "targets": [3], "param": r(angles[10]), "index": idx}); idx += 1
+    gates.append({"type": "rz", "targets": [3], "param": r(angles[11]), "index": idx}); idx += 1
+    gates.append({"type": "ry", "targets": [4], "param": r(angles[12]), "index": idx}); idx += 1
+    gates.append({"type": "rz", "targets": [4], "param": r(angles[13]), "index": idx}); idx += 1
 
-            sorted_items = sorted(counts.items(), key=lambda x: x[1], reverse=True)
-            top1 = sorted_items[0]
-            top1_bit, top1_count = top1
-            top1_frac = top1_count / float(shots)
+    gates.append({"type": "cx", "controls": [3], "targets": [4], "index": idx}); idx += 1
+    gates.append({"type": "cx", "controls": [4], "targets": [3], "index": idx}); idx += 1
 
-            if len(sorted_items) > 1:
-                top2 = sorted_items[1]
-                top2_bit, top2_count = top2
-                top2_frac = top2_count / float(shots)
-            else:
-                top2_bit, top2_count = "0", 0
-                top2_frac = 0
+    gates.append({"type": "cry", "controls": [3], "targets": [5], "param": r(angles[14]), "index": idx}); idx += 1
+    gates.append({"type": "cry", "controls": [4], "targets": [6], "param": r(angles[15]), "index": idx}); idx += 1
 
-            if idx % 1000 == 0:
-                print(
-                    f"{idx}/{total}: {batch[i]} - top1 {top1_bit} ({top1_count}/{shots}={top1_frac:.2f}), top2 {top2_bit} ({top2_count}/{shots}={top2_frac:.2f})")
+    gates.append({"type": "cx", "controls": [0], "targets": [5], "index": idx}); idx += 1
+    gates.append({"type": "cx", "controls": [1], "targets": [6], "index": idx}); idx += 1
+    gates.append({"type": "cx", "controls": [2], "targets": [6], "index": idx}); idx += 1
 
-            if top1_frac > threshold:
-                extraordinary.append((
-                    tuple(batch[i]),
-                    (top1_bit, top1_count, top1_frac),
-                    (top2_bit, top2_count, top2_frac),
-                ))
+    gates.append({"type": "ry", "targets": [5], "param": r(angles[16]), "index": idx}); idx += 1
+    gates.append({"type": "ry", "targets": [6], "param": r(angles[17]), "index": idx}); idx += 1
+    gates.append({"type": "rz", "targets": [5], "param": r(angles[18]), "index": idx}); idx += 1
+    gates.append({"type": "rz", "targets": [6], "param": r(angles[19]), "index": idx}); idx += 1
 
-    it = itertools.product(values, repeat=len(params))
-    batch = []
-    processed = 0
-    for combo in it:
-        batch.append(combo)
-        if len(batch) >= batch_size:
-            run_batch(batch, processed)
-            processed += len(batch)
-            batch = []
-    if batch:
-        run_batch(batch, processed)
-        processed += len(batch)
+    gates.append({"type": "measure", "targets": [5, 6], "index": idx})
 
-    top1_counts = Counter(item[1][0] for item in extraordinary)
-    top2_counts = Counter(item[2][0] for item in extraordinary)
-
-    print("Top1 counts:")
-    for bit, count in sorted(top1_counts.items()):
-        print(f"{bit}: {count}")
-
-    print("Top2 counts:")
-    for bit, count in sorted(top2_counts.items()):
-        print(f"{bit}: {count}")
-
-    pair_counts = Counter((item[1][0], item[2][0]) for item in extraordinary)
-    print("Pair counts:")
-    for pair, count in pair_counts.most_common():
-        print(f"{pair}: {count}")
-
-    for angles, top1, top2 in extraordinary:
-        if (top1[0], top2[0]) == ("01", "11"):
-            angles_str = ", ".join(f"{a:.4f}" for a in angles)
-            print(f"{angles_str}")
+    return {"qubits": 7, "gates": gates}
 
 
 if __name__ == "__main__":
     angles = [random.uniform(-12*pi, 12*pi) for _ in range(20)]
     runner = QuantumRunner()
+    print(serialize_circuit(angles))
 
-    for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (2, 2, 2)]:
-        actions = [runner.get_action(angles, vision) for _ in range(100)]
-        print(f"{vision} -", Counter(actions))
+    # for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (2, 2, 2)]:
+    #     actions = [runner.get_action(angles, vision) for _ in range(100)]
+    #     print(f"{vision} -", Counter(actions))

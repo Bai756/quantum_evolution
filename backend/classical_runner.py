@@ -34,6 +34,26 @@ class ClassicalRunner:
     def get_weights(self):
         return self.model.get_weights()
 
+def weights_to_json(weights):
+    def r(x):
+        return float(round(float(x), 2))
+
+    out_layers = []
+    for w in weights:
+        arr = np.asarray(w)
+        if arr.ndim == 1:
+            # if 1d array, just output a list
+            shape = [int(arr.shape[0]),]
+            weights_list = [r(x) for x in arr.tolist()]
+            out_layers.append({"shape": shape, "weights": weights_list})
+        elif arr.ndim == 2:
+            # if 2d array, output list of lists
+            shape = [int(arr.shape[0]), int(arr.shape[1])]
+            weights_list = [[r(x) for x in row] for row in arr.tolist()]
+            out_layers.append({"shape": shape, "weights": weights_list})
+
+    return {"layers": out_layers}
+
 
 if __name__ == "__main__":
     file_path = "best_classical_weights.txt"
@@ -60,6 +80,7 @@ if __name__ == "__main__":
             weights.append(arr)
 
     runner = ClassicalRunner(weights=weights)
-    for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (2, 2, 2)]:
-        actions = [runner.get_action(vision) for _ in range(100)]
-        print(f"{vision} -", Counter(actions))
+    print(weights_to_json(runner.get_weights()))
+    # for vision in [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 0), (1, 0, 1), (0, 1, 1), (2, 2, 2)]:
+    #     actions = [runner.get_action(vision) for _ in range(100)]
+    #     print(f"{vision} -", Counter(actions))
