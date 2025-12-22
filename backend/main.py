@@ -256,7 +256,6 @@ if __name__ == "__main__":
 # TODO:
 # Make visualization look better
     # Quantum visualization is all bunched up
-    # Classical can have color for weights and biases
 # Don't allow running if evolution is already running
 # Fix when pressing run genome it doesn't allow evolution to be run again without refreshing
 # Add a fitness to run genome so it's not 0 and gen 0

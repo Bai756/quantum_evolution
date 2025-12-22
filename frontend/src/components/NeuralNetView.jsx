@@ -49,7 +49,7 @@ export default function NeuralNetView({ network, width, height }) {
 	// global max for weights and biases
 	let globalMaxWeight = 1;
 	let globalMaxBias = 1;
-	for (let i = 1; i < grouped.length; i++) {
+	for (let i = 0; i < grouped.length; i++) {
 		const g = grouped[i];
 		if (Array.isArray(g.weights) && Array.isArray(g.weights[0])) {
 			for (let r = 0; r < g.weights.length; r++) {
@@ -84,6 +84,27 @@ export default function NeuralNetView({ network, width, height }) {
 		return start + nodeIdx * yStep;
 	};
 
+	// colors - positive blue, negative red, zero gray
+	const POS_COLOR = '#e24a4a';
+	const NEG_COLOR = '#3264ff';
+	const ZERO_COLOR = '#fff';
+
+	function valueColor(v) {
+		const n = Number(v);
+		if (n > 0) {
+			return POS_COLOR;
+		}
+		if (n < 0) {
+			return NEG_COLOR;
+		}
+		return ZERO_COLOR;
+	}
+
+	function clampedOpacity(mag, max) {
+		// opacity scaled 0.1-1.0 based on global relative magnitude
+		return Math.max(0.1, Math.min(1.0, mag / max));
+	}
+
 	// render connections for a grouped layer index
 	function renderConnections(layerIdx) {
 		const g = grouped[layerIdx];
@@ -92,8 +113,7 @@ export default function NeuralNetView({ network, width, height }) {
 		return w.flatMap((row, rIdx) => (
 			row.map((val, cIdx) => {
 				const absv = Math.abs(Number(val));
-				// opacity scaled 0.1-1.0 based on global relative magnitude
-				const op = Math.max(0.1, Math.min(1.0, absv / globalMaxWeight));
+				const op = clampedOpacity(absv, globalMaxWeight);
 				return (
 					<line
 						key={`e-${layerIdx}-${rIdx}-${cIdx}`}
@@ -101,7 +121,7 @@ export default function NeuralNetView({ network, width, height }) {
 						y1={yFor(layerIdx, rIdx, nodes[layerIdx])}
 						x2={xFor(layerIdx + 1)}
 						y2={yFor(layerIdx + 1, cIdx, nodes[layerIdx + 1])}
-						stroke="#444"
+						stroke={valueColor(val)}
 						strokeWidth={1}
 						strokeOpacity={op}
 					/>
@@ -116,18 +136,19 @@ export default function NeuralNetView({ network, width, height }) {
 				{nodes.map((count, layerIdx) => (
 					<g key={`layer-${layerIdx}`}>
 						{Array.from({ length: count }).map((_, ni) => {
-							// determine fill opacity from global bias magnitude
+							let fill = '#fff';
 							let fillOpacity = 1.0;
 							if (layerIdx > 0) {
 								const biasArr = grouped[layerIdx - 1] && grouped[layerIdx - 1].biases;
 								if (Array.isArray(biasArr)) {
-									const biasVal = Math.abs(Number(biasArr[ni]));
-									fillOpacity = Math.max(0.1, Math.min(1.0, biasVal / globalMaxBias));
+									const biasVal = Number(biasArr[ni]);
+									fill = valueColor(biasVal);
+									fillOpacity = clampedOpacity(Math.abs(biasVal), globalMaxBias);
 								}
 							}
 
 							return (
-								<circle key={`n-${layerIdx}-${ni}`} cx={xFor(layerIdx)} cy={yFor(layerIdx, ni, count)} r={6} fill="#fff" stroke="#333" fillOpacity={fillOpacity} />
+								<circle key={`n-${layerIdx}-${ni}`} cx={xFor(layerIdx)} cy={yFor(layerIdx, ni, count)} r={6} fill={fill} fillOpacity={fillOpacity} />
 							);
 						})}
 
@@ -135,6 +156,13 @@ export default function NeuralNetView({ network, width, height }) {
 					</g>
 				))}
 			</svg>
+
+			<div style={{ marginTop: 8 }}>
+				Legend:<br/>
+				Red = positive value<br/>
+				Blue = negative value<br/>
+				Opacity = magnitude
+			</div>
 		</div>
 	);
 }
