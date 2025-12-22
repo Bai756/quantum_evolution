@@ -224,7 +224,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 			{showVisuals && (circuitVisualisation || networkVisualisation) && (
 				<div style={{ marginTop: 12 }}>
 					{circuitVisualisation && (
-						<CircuitView circuit={circuitVisualisation} width={700} height={140} />
+						<CircuitView circuit={circuitVisualisation} width={500} height={200} />
 					)}
 					{networkVisualisation && (
 						<NeuralNetView network={networkVisualisation} width={500} height={600} />
