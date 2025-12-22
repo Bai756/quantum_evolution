@@ -44,6 +44,12 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	}, [gridSize]);
 
 	function handleRunEvolution() {
+		// clear any displayed best visualization when starting a new run
+		try {
+			window.dispatchEvent(new CustomEvent('clearBestVisualization'));
+		} catch (e) {
+			// ignore
+		}
 		setGenomeError('');
 		setDone(false);
 		// close previous stream if any

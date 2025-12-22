@@ -6,8 +6,7 @@ class ClassicalRunner:
     def __init__(self, weights=None):
         self.model = Sequential([
             layers.Input(shape=(3,)),
-            layers.Dense(128, activation="relu"),
-            layers.Dense(64, activation="relu"),
+            layers.Dense(32, activation="relu"),
             layers.Dense(32, activation="relu"),
             layers.Dense(4, activation="linear"),
         ])

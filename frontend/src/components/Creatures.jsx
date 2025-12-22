@@ -17,6 +17,15 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 	const [lastVisualization, setLastVisualization] = useState(null);
 	const initializedRef = useRef(false);
 
+	// Clear visualization when a new run is started
+	useEffect(() => {
+		function onClear() {
+			setLastVisualization(null);
+		}
+		window.addEventListener('clearBestVisualization', onClear);
+		return () => window.removeEventListener('clearBestVisualization', onClear);
+	}, []);
+
 	useEffect(() => {
 		// Only run this once on start
 		if (initializedRef.current) {
@@ -215,10 +224,10 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 			{showVisuals && (circuitVisualisation || networkVisualisation) && (
 				<div style={{ marginTop: 12 }}>
 					{circuitVisualisation && (
-						<CircuitView circuit={circuitVisualisation} width={520} height={140} />
+						<CircuitView circuit={circuitVisualisation} width={700} height={140} />
 					)}
 					{networkVisualisation && (
-						<NeuralNetView network={networkVisualisation} width={520} height={180} />
+						<NeuralNetView network={networkVisualisation} width={500} height={600} />
 					)}
 				</div>
 			)}
