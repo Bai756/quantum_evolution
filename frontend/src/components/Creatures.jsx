@@ -194,12 +194,12 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 			<div style={{ marginBottom: 8 }}>
 				{lastGen !== null && lastFitness !== null && (
 					<div>
-						Gen {lastGen} | Fitness {lastFitness.toFixed(1)}
+						Gen {lastGen} | Current fitness {lastFitness.toFixed(1)}
 					</div>
 				)}
 				{best && (
 					<div style={{ marginTop: 8 }}>
-						Best: Fitness {bestFitnessText}
+						Best fitness overall: {bestFitnessText}
 					</div>
 				)}
 			</div>

@@ -339,7 +339,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			<br/>
 
 			<label>
-				Max Moves (energy): {maxMoves}
+				Energy: {maxMoves}
 				<br/>
 				<input type="range"
 					   min="1"

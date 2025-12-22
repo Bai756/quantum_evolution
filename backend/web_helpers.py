@@ -4,8 +4,6 @@ from math import pi
 from simulate import QuantumRunner, mutate, evaluate_average
 from environment import Creature, Environment
 from simulate_classical import ClassicalRunner, mutate_classical, evaluate_average as evaluate_average_classical
-from quantum_runner import serialize_circuit
-from classical_runner import weights_to_json
 import numpy as np
 
 async def evolution_async(generations, children, chance, repeats, elites, grid_size, vision_range, max_moves, wall_density, sigma):
@@ -94,10 +92,7 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
                 print("(re)starting simulation for gen", holder.get("generation"))
                 last_version = holder.get("version")
 
-                base = holder.get("creature")
-                if not isinstance(base, Creature):
-                    await asyncio.sleep(0.1)
-                    continue
+                base = holder["creature"]
 
                 fresh, runner = clone_creature_for_run(base, quantum)
                 env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
@@ -111,11 +106,15 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
                 action = runner.get_action(vision)
 
             env.step(action)
+
+            holder["fitness"] = compute_fitness(env.player, env)
+
             await on_snapshot(env, holder)
 
             if env.player.energy <= 0:
                 print("No energy, simulation done")
                 sim_stop_event.set()
+                holder["fitness"] = compute_fitness(env.player, env)
                 await on_snapshot(env, holder)
                 continue
 
@@ -123,8 +122,10 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
             if not env.has_food():
                 print("All food eaten, simulation done")
                 sim_stop_event.set()
+                holder["fitness"] = compute_fitness(env.player, env)
     except asyncio.CancelledError:
         return
+
 
 def create_genome_text(c: Creature, quantum):
     if quantum:
@@ -208,3 +209,23 @@ def creature_from_genome_text(genome, max_energy):
         raise ValueError(f"Failed to create ClassicalRunner from weights: {e}")
 
     return Creature(model=runner, max_energy=max_energy)
+
+
+def compute_fitness(creature, env):
+    total_food = creature.food_eaten
+    for row in env.grid:
+        for square in row:
+            if square == 2:
+                total_food += 1
+
+    fitness = creature.food_eaten * 100 + len(creature.visited_positions)
+
+    if creature.food_eaten >= total_food:
+        fitness += 1000
+
+    if creature.energy <= 0:
+        fitness -= 50
+    else:
+        fitness += 20
+
+    return fitness
