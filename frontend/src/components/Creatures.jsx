@@ -199,7 +199,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 				)}
 				{best && (
 					<div style={{ marginTop: 8 }}>
-						Best fitness overall: {bestFitnessText}
+						Best average fitness: {bestFitnessText}
 					</div>
 				)}
 			</div>

@@ -254,4 +254,6 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # TODO:
-# Fix when pressing run genome it doesn't allow evolution to be run again without refreshing
+# add css
+# host the site
+# maybe landing page and a "tutorial?"

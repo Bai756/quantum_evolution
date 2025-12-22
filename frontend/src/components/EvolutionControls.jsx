@@ -152,7 +152,6 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 			wall_density: Number(wallDensity),
 			visualize: showVisuals,
 		};
-		setRunning(true);
 
 		wsRef.current = createEvolutionSocket(payload, (msg) => {
 			if (msg.error) {
@@ -212,9 +211,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					<option value="classical">Classical</option>
 				</select>
 			</label>
-
 			<br/>
-
 			<label>
 				Generations: {generations}
 				<br/>
@@ -226,9 +223,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					onChange={(e) => setGenerations(e.target.value)}
 				/>
 			</label>
-
 			<br/>
-
 			<label>
 				Children per parent: {children}
 				<br/>
@@ -240,9 +235,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					onChange={(e) => setChildren(e.target.value)}
 				/>
 			</label>
-
 			<br/>
-
 			<label>
 				Chance of mutation: {chance}
 				<br/>
@@ -255,9 +248,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					onChange={(e) => setChance(e.target.value)}
 				/>
 			</label>
-
 			<br/>
-
 			<label>
 				Mutation magnitude: {sigma}
 				<br/>
@@ -270,9 +261,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					onChange={(e) => setSigma(e.target.value)}
 				/>
 			</label>
-
 			<br/>
-
 			<label>
 				Repeats (fitness average): {repeats}
 				<br/>
@@ -284,9 +273,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					onChange={(e) => setRepeats(e.target.value)}
 				/>
 			</label>
-
 			<br/>
-
 			<label>
 				Number of elites to return: {elites}
 				<br/>
@@ -298,9 +285,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					onChange={(e) => setElites(e.target.value)}
 				/>
 			</label>
-
 			<br/>
-
 			<label>
 				Grid Size: {gridSize}
 				<br/>
@@ -310,9 +295,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   value={gridSize}
 					   onChange={(e) => setGridSize(Number(e.target.value))} />
 			</label>
-
 			<br/>
-
 			<label>
 				Vision Range: {visionRange}
 				<br/>
@@ -322,9 +305,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   value={visionRange}
 					   onChange={(e) => setVisionRange(Number(e.target.value))} />
 			</label>
-
 			<br/>
-
 			<label>
 				Wall density: {wallDensity}
 				<br/>
@@ -335,9 +316,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   value={wallDensity}
 					   onChange={(e) => setWallDensity(Number(e.target.value))} />
 			</label>
-
 			<br/>
-
 			<label>
 				Energy: {maxMoves}
 				<br/>
@@ -347,7 +326,6 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   value={maxMoves}
 					   onChange={(e) => setMaxMoves(Number(e.target.value))} />
 			</label>
-
 			<div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
 				<button onClick={handleRunEvolution} disabled={running}>
 					{running ? 'Running...' : 'Run Evolution'}
