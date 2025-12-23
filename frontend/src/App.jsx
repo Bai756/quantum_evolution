@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import CreatureList from './components/Creatures.jsx';
 import EvolutionControls from './components/EvolutionControls.jsx';
+import GitHubIconUrl from './assets/github.svg';
 
 const App = () => {
 	const [snapshot, setSnapshot] = useState(null);
@@ -33,6 +34,15 @@ const App = () => {
 
 	return (
 		<div className="App">
+			<a
+				href="https://github.com/Bai756/quantum_evolution"
+				target="_blank"
+				rel="noopener noreferrer"
+				className="github-link"
+				aria-label="GitHub repository"
+			>
+				<img src={GitHubIconUrl} alt="GitHub" className="github-link-icon" />
+			</a>
 			<header className="App-header">
 				<h1>Quantum Evolution</h1>
 			</header>
