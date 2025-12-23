@@ -187,7 +187,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 	return (
 		<div className="controls-root">
 		<div className="panel controls-panel">
-			<h3 className="controls-title">Evolution controls</h3>
+			<h3 className="controls-title">Controls</h3>
 
 			<label className="control-group">
 				Mode:
@@ -338,7 +338,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				)}
 			</div>
 
-			<hr className="panel-separator" />
+			<hr className="panel-separator"/>
 			<div className="toggle-row">
 				<label className="control-group toggle-label">
 					<input type="checkbox" checked={showVisuals} onChange={(e) => setShowVisuals(e.target.checked)} />

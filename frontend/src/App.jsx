@@ -34,7 +34,7 @@ const App = () => {
 	return (
 		<div className="App">
 			<header className="App-header">
-				<h1>Evolution display</h1>
+				<h1>Quantum Evolution</h1>
 			</header>
 			<main>
 				<div style={{ display: 'flex', gap: 24, alignItems: 'flex-start', justifyContent: 'center' }}>

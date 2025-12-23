@@ -38,8 +38,8 @@ export default function CircuitView({ circuit, width = 520, height = 160 }) {
 			const y = yForQubit(targetQ);
 			return (
 				<g key={gateIndex}>
-					<rect x={x - gateWidth / 2} y={y - 10} width={gateWidth} height={20} rx={3} fill="#f5f5f5"/>
-					<text x={x} y={y + 4} fontSize={10} textAnchor="middle" fill="#111">
+					<rect x={x - gateWidth / 2} y={y - 10} width={gateWidth} height={20} rx={3} style={{ fill: 'var(--gate-fill)' }} />
+					<text x={x} y={y + 4} fontSize={10} textAnchor="middle" style={{ fill: 'var(--gate-text)' }}>
 						{gate.type}: {gate.param}
 					</text>
 				</g>
@@ -54,10 +54,10 @@ export default function CircuitView({ circuit, width = 520, height = 160 }) {
 			const yT = yForQubit(targetQ);
 			return (
 				<g key={gateIndex}>
-					<circle cx={x} cy={yC} r={5} fill="#666" />
-					<line x1={x} y1={yC} x2={x} y2={yT} stroke="#666" strokeWidth={3} />
-					<rect x={x - gateWidth / 2} y={yT - 10} width={gateWidth} height={20} rx={3} fill="#f5f5f5"/>
-					<text x={x} y={yT + 4} fontSize={10} textAnchor="middle" fill="#111">
+					<circle cx={x} cy={yC} r={5} style={{ fill: 'var(--gate-ctrl)' }} />
+					<line x1={x} y1={yC} x2={x} y2={yT} stroke="var(--gate-ctrl)" strokeWidth={3} />
+					<rect x={x - gateWidth / 2} y={yT - 10} width={gateWidth} height={20} rx={3} style={{ fill: 'var(--gate-fill)' }} />
+					<text x={x} y={yT + 4} fontSize={10} textAnchor="middle" style={{ fill: 'var(--gate-text)' }}>
 						{gate.type.replace('c', '')}: {gate.param}
 					</text>
 				</g>
@@ -80,11 +80,11 @@ export default function CircuitView({ circuit, width = 520, height = 160 }) {
 			return (
 				<g key={gateIndex}>
 					{controlQList.map((cQ, idx) => (
-						<circle key={`ctrl-${idx}`} cx={x} cy={yForQubit(cQ)} r={5} fill="#666" />
+						<circle key={`ctrl-${idx}`} cx={x} cy={yForQubit(cQ)} r={5} style={{ fill: 'var(--gate-ctrl)' }} />
 					))}
-					<line x1={x} y1={yForQubit(controlQList[0])} x2={x} y2={yT} stroke="#666" strokeWidth={3} />
-					<rect x={x - gateWidth / 2} y={yT - 10} width={gateWidth} height={20} rx={3} fill="#fff"/>
-					<text x={x} y={yT + 4} fontSize={10} textAnchor="middle" fill="#111">X</text>
+					<line x1={x} y1={yForQubit(controlQList[0])} x2={x} y2={yT} stroke="var(--gate-ctrl)" strokeWidth={3} />
+					<rect x={x - gateWidth / 2} y={yT - 10} width={gateWidth} height={20} rx={3} style={{ fill: 'var(--measure-fill)' }} />
+					<text x={x} y={yT + 4} fontSize={10} textAnchor="middle" style={{ fill: 'var(--gate-text)' }}>X</text>
 				</g>
 			);
 		}
@@ -96,8 +96,8 @@ export default function CircuitView({ circuit, width = 520, height = 160 }) {
 				<g key={gateIndex}>
 					{targetList.map((tQ, i) => (
 						<g key={`m-${i}`}>
-							<rect x={x - gateWidth / 2} y={yForQubit(tQ) - 8} width={gateWidth} height={16} rx={3} fill="#ffffff"/>
-							<text x={x} y={yForQubit(tQ)} fontSize={12} textAnchor="middle" dominantBaseline="middle" fill="#333">Measure</text>
+							<rect x={x - gateWidth / 2} y={yForQubit(tQ) - 8} width={gateWidth} height={16} rx={3} style={{ fill: 'var(--measure-fill)' }} />
+							<text x={x} y={yForQubit(tQ)} fontSize={12} textAnchor="middle" dominantBaseline="middle" style={{ fill: 'var(--measure-text)' }}>Measure</text>
 						</g>
 					))}
 				</g>
@@ -115,7 +115,7 @@ export default function CircuitView({ circuit, width = 520, height = 160 }) {
 				y1={yForQubit(q)}
 				x2={totalWidth - padding}
 				y2={yForQubit(q)}
-				stroke="#fff"
+				stroke="var(--qubit-line)"
 				strokeWidth={1}
 			/>
 		);
@@ -124,7 +124,7 @@ export default function CircuitView({ circuit, width = 520, height = 160 }) {
 	const qubitLabels = [];
 	for (let q = 0; q < qubitCount; q++) {
 		qubitLabels.push(
-			<text key={`label-${q}`} x={padding + labelWidth - 6} y={yForQubit(q)} fontSize={12} textAnchor="end" dominantBaseline="middle" fill="#fff">{`q${q}`}</text>
+			<text key={`label-${q}`} x={padding + labelWidth - 6} y={yForQubit(q)} fontSize={12} textAnchor="end" dominantBaseline="middle" style={{ fill: 'var(--qubit-line)' }}>{`q${q}`}</text>
 		);
 	}
 

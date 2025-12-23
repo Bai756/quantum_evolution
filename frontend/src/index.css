@@ -3,11 +3,30 @@
     line-height: 1.5;
     font-weight: 400;
 
-    color-scheme: light dark;
-    color: rgba(255, 255, 255, 0.87);
-    background-color: #242424;
+    --bg-color: #1e1e22;
+    --text-color: #f9f9f9;
 
-    font-synthesis: none;
+    --button-bg: #1b1b1e;
+    --button-border: transparent;
+
+    --dragover-border: #00b4d8;
+    --dragover-bg: rgba(144,224,239,0.06);
+
+    --muted-border: rgba(249,249,249,0.06);
+
+    --link-glow: rgba(0,180,216,0.14);
+    --react-glow: rgba(123,44,191,0.14);
+
+    --gate-fill: #f9f9f9;
+    --gate-text: #1b1e1e;
+    --gate-ctrl: #6b6b6b;
+    --measure-fill: #e9e9e9;
+    --measure-text: #1b1e1e;
+    --qubit-line: #f9f9f9;
+
+    color: var(--text-color);
+    background-color: var(--bg-color);
+
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -15,11 +34,11 @@
 
 a {
     font-weight: 500;
-    color: #646cff;
+    color: var(--link-glow);
     text-decoration: inherit;
 }
 a:hover {
-    color: #535bf2;
+    color: var(--react-glow);
 }
 
 body {
@@ -37,35 +56,23 @@ h1 {
 
 button {
     border-radius: 8px;
-    border: 1px solid transparent;
+    border: 1px solid var(--button-border);
     padding: 0.6em 1.2em;
     font-size: 1em;
     font-weight: 500;
-    font-family: inherit;
-    background-color: #1a1a1a;
+    background-color: var(--button-bg);
     cursor: pointer;
     transition: border-color 0.25s;
+    color: var(--text-color);
 }
 button:hover {
-    border-color: #646cff;
+    border-color: var(--link-glow);
 }
 button:focus,
 button:focus-visible {
     outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-    :root {
-        color: #213547;
-        background-color: #ffffff;
-    }
-    a:hover {
-        color: #747bff;
-    }
-    button {
-        background-color: #f9f9f9;
-    }
-}
 
 .controls-root {
     width: 100%;
@@ -88,7 +95,6 @@ button:focus-visible {
     max-width: 360px;
     margin-bottom: 16px;
     text-align: left;
-
 }
 
 .controls-title,
@@ -99,9 +105,7 @@ button:focus-visible {
 
 .control-group {
     display: block;
-    margin-bottom: 8px;
     font-size: 0.95em;
-
 }
 
 .control-range {
@@ -132,6 +136,7 @@ button:focus-visible {
     max-width: 100%;
     margin-bottom: 16px;
     text-align: left;
+    color: var(--text-color);
 }
 
 .genome-actions {
@@ -145,13 +150,12 @@ button:focus-visible {
     margin-top: 8px;
     padding: 6px;
     border-radius: 8px;
-    border: 1px solid rgba(127,127,127,0.35);
     background: transparent;
 }
 
 .genome-dropzone.is-dragover {
-    border: 2px dashed #646cff;
-    background: rgba(100,108,255,0.08);
+    border: 2px dashed var(--dragover-border);
+    background: var(--dragover-bg);
 }
 
 .genome-run-actions {
@@ -186,20 +190,18 @@ button:focus-visible {
 
 .creature-canvas {
     display: block;
-    border: 1px solid #ddd;
+    border: 1px solid var(--muted-border);
 }
 
 .energy-bar {
     height: 8px;
     width: 100%;
-    background: #eee;
     border-radius: 4px;
     overflow: hidden;
 }
 
 .energy-bar-fill {
     height: 100%;
-    background: #3264ff;
 }
 
 .visualization-panel {
@@ -223,7 +225,7 @@ button[disabled] {
 .panel-separator {
     margin: 16px 0;
     border: none;
-    border-top: 1px solid rgba(200,200,200,0.06);
+    border-top: 1px solid var(--muted-border);
 }
 
 .file-input {
@@ -234,8 +236,8 @@ button[disabled] {
     padding: 6px;
     font-size: 1em;
     border-radius: 6px;
-    border: 1px solid rgba(127,127,127,0.35);
     background: transparent;
     font-family: inherit;
     cursor: pointer;
+    color: var(--text-color);
 }
