@@ -6,6 +6,8 @@ from pydantic import BaseModel
 from typing import List
 from environment import Creature, Environment
 import web_helpers
+from classical_runner import weights_to_json
+from quantum_runner import serialize_circuit
 
 
 class CreatureSnapshot(BaseModel):
@@ -111,10 +113,10 @@ async def ws_evolution(ws: WebSocket):
 
         if visualize:
             if quantum:
-                data["best"]["visualization"] = {"circuit": web_helpers.serialize_circuit(creature.angles)}
+                data["best"]["visualization"] = {"circuit": serialize_circuit(creature.angles)}
             else:
                 weights = creature.model.get_weights()
-                data["best"]["visualization"] = {"network": web_helpers.weights_to_json(weights)}
+                data["best"]["visualization"] = {"network": weights_to_json(weights)}
         return await safe_send(data)
 
     async def safe_send(data):

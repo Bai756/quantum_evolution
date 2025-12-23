@@ -190,7 +190,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 	const networkVisualisation = lastVisualization && lastVisualization.network ? lastVisualization.network : null;
 
 	return (
-		<div>
+		<div className="panel">
 			<div style={{ marginBottom: 8 }}>
 				{lastGen !== null && lastFitness !== null && (
 					<div>
@@ -203,7 +203,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 					</div>
 				)}
 			</div>
-			<div ref={canvasContainerRef} style={{ margin: '0 auto', textAlign: 'center' }}>
+			<div ref={canvasContainerRef} className="canvas-container" style={{ margin: '0 auto', textAlign: 'center' }}>
 				<canvas
 					ref={canvasReference}
 					style={{ border: '1px solid #dddddd', display: 'block' }}
@@ -211,7 +211,7 @@ export default function CreatureCanvas({ snapshot, gridSize = 9, showVisuals = t
 				/>
 				{maxEnergy != null && energy != null && (
 					<div style={{ marginTop: 8 }}>
-						<div style={{ height: 8, width: '100%', background: '#eee', borderRadius: 4 }}>
+						<div className="energy-bar" style={{ height: 8, width: '100%', background: '#eee', borderRadius: 4 }}>
 							<div style={{ width: `${Math.round(energyPercent*100)}%`, height: '100%', background: '#3264ff', borderRadius: 4 }} />
 						</div>
 						<div style={{ marginTop: 4 }}>

@@ -1,68 +1,241 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+    color: #535bf2;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+    margin: 0;
+    display: flex;
+    place-items: center;
+    min-width: 320px;
+    min-height: 100vh;
 }
 
 h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+    font-size: 3.2em;
+    line-height: 1.1;
 }
 
 button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #646cff;
+    border-color: #646cff;
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+    outline: 4px auto -webkit-focus-ring-color;
 }
 
 @media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+    :root {
+        color: #213547;
+        background-color: #ffffff;
+    }
+    a:hover {
+        color: #747bff;
+    }
+    button {
+        background-color: #f9f9f9;
+    }
+}
+
+.controls-root {
+    width: 100%;
+}
+
+.app-main-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.panel {
+    background: transparent;
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.controls-panel {
+    max-width: 360px;
+    margin-bottom: 16px;
+    text-align: left;
+
+}
+
+.controls-title,
+.genome-title {
+    margin: 0 0 8px 0;
+    font-size: 1.05em;
+}
+
+.control-group {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+
+}
+
+.control-range {
+    width: 100%;
+}
+
+.control-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.toggle-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.toggle-label {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.genome-panel {
+    max-width: 100%;
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.genome-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.genome-dropzone {
+    margin-top: 8px;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(127,127,127,0.35);
+    background: transparent;
+}
+
+.genome-dropzone.is-dragover {
+    border: 2px dashed #646cff;
+    background: rgba(100,108,255,0.08);
+}
+
+.genome-run-actions {
+    margin-top: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.genome-textarea {
+    width: 100%;
+    min-height: 120px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.genome-error {
+    margin-top: 8px;
+    color: crimson;
+    white-space: pre-wrap;
+    font-size: 0.95em;
+}
+
+.creature-panel {
+    padding: 12px;
+}
+
+.canvas-container {
+    margin: 0 auto;
+    text-align: center;
+}
+
+.creature-canvas {
+    display: block;
+    border: 1px solid #ddd;
+}
+
+.energy-bar {
+    height: 8px;
+    width: 100%;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.energy-bar-fill {
+    height: 100%;
+    background: #3264ff;
+}
+
+.visualization-panel {
+    margin-top: 12px;
+}
+
+.visual-svg {
+    display: block;
+}
+
+.visual-legend {
+    margin-top: 8px;
+    font-size: 0.85em;
+}
+
+button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.panel-separator {
+    margin: 16px 0;
+    border: none;
+    border-top: 1px solid rgba(200,200,200,0.06);
+}
+
+.file-input {
+    display: none;
+}
+
+.quantum-classical-select {
+    padding: 6px;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1px solid rgba(127,127,127,0.35);
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
 }

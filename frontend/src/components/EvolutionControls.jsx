@@ -184,24 +184,15 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 		}
 	}
 
-	function handleGenomeDrop(e) {
-		e.preventDefault();
-		e.stopPropagation();
-		setIsGenomeDragOver(false);
-		const file = e.dataTransfer?.files?.[0];
-		if (file) {
-			loadGenomeFromFile(file);
-		}
-	}
-
 	return (
-		<div style={{ marginBottom: 16, textAlign: 'left' }}>
-			<h3>Evolution controls</h3>
+		<div className="controls-root">
+		<div className="panel controls-panel">
+			<h3 className="controls-title">Evolution controls</h3>
 
-			<label>
+			<label className="control-group">
 				Mode:
 				<br/>
-				<select value={quantum ? 'quantum' : 'classical'} onChange={(e) => {
+				<select className="quantum-classical-select" value={quantum ? 'quantum' : 'classical'} onChange={(e) => {
 					// set default value of sigma based on if quantum or classical
 					const isQuantum = e.target.value === 'quantum';
 					setQuantum(isQuantum);
@@ -212,7 +203,7 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				</select>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Generations: {generations}
 				<br/>
 				<input
@@ -220,11 +211,12 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					min="1"
 					max="50"
 					value={generations}
+					className="control-range"
 					onChange={(e) => setGenerations(e.target.value)}
 				/>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Children per parent: {children}
 				<br/>
 				<input
@@ -232,11 +224,12 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					min="1"
 					max="50"
 					value={children}
+					className="control-range"
 					onChange={(e) => setChildren(e.target.value)}
 				/>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Chance of mutation: {chance}
 				<br/>
 				<input
@@ -245,11 +238,12 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					max="1"
 					step="0.01"
 					value={chance}
+					className="control-range"
 					onChange={(e) => setChance(e.target.value)}
 				/>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Mutation magnitude: {sigma}
 				<br/>
 				<input
@@ -258,11 +252,12 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					max={quantum ? "12" : "1"}
 					step={quantum ? "0.1" : "0.01"}
 					value={sigma}
+					className="control-range"
 					onChange={(e) => setSigma(e.target.value)}
 				/>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Repeats (fitness average): {repeats}
 				<br/>
 				<input
@@ -270,43 +265,47 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					min="1"
 					max="10"
 					value={repeats}
+					className="control-range"
 					onChange={(e) => setRepeats(e.target.value)}
 				/>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Number of elites to return: {elites}
 				<br/>
 				<input
 					type="range"
 					min="1"
-					max="10"
+				max="10"
 					value={elites}
+					className="control-range"
 					onChange={(e) => setElites(e.target.value)}
 				/>
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Grid Size: {gridSize}
 				<br/>
 				<input type="range"
 					   min="5"
 					   max="15"
 					   value={gridSize}
+					   className="control-range"
 					   onChange={(e) => setGridSize(Number(e.target.value))} />
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Vision Range: {visionRange}
 				<br/>
 				<input type="range"
 					   min="1"
 					   max={Math.max(1, Math.floor(gridSize/2))}
 					   value={visionRange}
+					   className="control-range"
 					   onChange={(e) => setVisionRange(Number(e.target.value))} />
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Wall density: {wallDensity}
 				<br/>
 				<input type="range"
@@ -314,19 +313,21 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					   max="0.5"
 					   step="0.01"
 					   value={wallDensity}
+					   className="control-range"
 					   onChange={(e) => setWallDensity(Number(e.target.value))} />
 			</label>
 			<br/>
-			<label>
+			<label className="control-group">
 				Energy: {maxMoves}
 				<br/>
 				<input type="range"
 					   min="1"
 					   max={Math.max(1, gridSize)}
 					   value={maxMoves}
+					   className="control-range"
 					   onChange={(e) => setMaxMoves(Number(e.target.value))} />
 			</label>
-			<div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+			<div className="control-actions">
 				<button onClick={handleRunEvolution} disabled={running}>
 					{running ? 'Running...' : 'Run Evolution'}
 				</button>
@@ -337,16 +338,18 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 				)}
 			</div>
 
-			<hr style={{ margin: '16px 0' }} />
-			<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-				<label style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+			<hr className="panel-separator" />
+			<div className="toggle-row">
+				<label className="control-group toggle-label">
 					<input type="checkbox" checked={showVisuals} onChange={(e) => setShowVisuals(e.target.checked)} />
 					<span>Show visualization</span>
 				</label>
 			</div>
+		</div>
+		<div className="panel genome-panel">
+			<h4 className="genome-title">Genome</h4>
 
-			<h4>Genome</h4>
-			<div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+			<div className="genome-actions">
 				<button onClick={handleCopyBestGenome} disabled={!bestGenomeText}>Copy genome</button>
 				<button onClick={handleDownloadBestGenome} disabled={!bestGenomeText}>Download genome</button>
 				<button onClick={handleLoadBestIntoTextbox} disabled={!bestGenomeText}>Load best into textbox</button>
@@ -355,54 +358,37 @@ export default function EvolutionControls({ onSnapshot, onBest, gridSize, setGri
 					type="file"
 					ref={genomeFileInputRef}
 					accept=".txt,text/plain"
-					style={{ display: 'none' }}
+					className="file-input"
 					onChange={(e) => loadGenomeFromFile(e.target.files?.[0])}
 				/>
 			</div>
 
 			<div
-				style={{
-					marginTop: 8,
-					padding: 6,
-					borderRadius: 8,
-					border: isGenomeDragOver ? '2px dashed #646cff' : '1px solid rgba(127,127,127,0.35)',
-					background: isGenomeDragOver ? 'rgba(100,108,255,0.08)' : 'transparent',
-				}}
-				onDragEnter={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					setIsGenomeDragOver(true);
-				}}
-				onDragOver={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					setIsGenomeDragOver(true);
-				}}
-				onDragLeave={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					setIsGenomeDragOver(false);
-				}}
-				onDrop={handleGenomeDrop}
-			>
+				className={`genome-dropzone ${isGenomeDragOver ? 'is-dragover' : ''}`}
+				onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsGenomeDragOver(true); }}
+				onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsGenomeDragOver(true); }}
+				onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsGenomeDragOver(false); }}
+				onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsGenomeDragOver(false); const file = e.dataTransfer?.files?.[0]; if (file) { loadGenomeFromFile(file); } }}
+             >
 				<textarea
 					rows={8}
-					style={{ width: '100%', fontFamily: 'monospace' }}
+					className="genome-textarea"
 					placeholder={'Paste / drop a genome text file here...'}
 					value={genomeText}
 					onChange={(e) => setGenomeText(e.target.value)}
 				/>
 			</div>
 
-			<div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+			<div className="genome-run-actions">
 				<button onClick={handleRunPastedGenome} disabled={!genomeText}>Run pasted genome</button>
 			</div>
 
 			{genomeError && (
-				<div style={{ marginTop: 8, color: 'crimson', whiteSpace: 'pre-wrap' }}>
+				<div className="genome-error">
 					{genomeError}
 				</div>
 			)}
+		</div>
 		</div>
 	);
 }
