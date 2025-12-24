@@ -115,12 +115,13 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
 
             if env.player.energy <= 0:
                 # print("No energy, simulation done")
-                fresh, runner = clone_creature_for_run(base, quantum)
-                env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
-                env.generate_food()
                 if not holder["auto_restart"]:
                     # print("stopping simulation")
                     sim_stop_event.set()
+                else:
+                    fresh, runner = clone_creature_for_run(base, quantum)
+                    env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
+                    env.generate_food()
                 holder["fitness"] = compute_fitness(env.player, env)
                 await on_snapshot(env, holder)
                 continue
@@ -128,12 +129,13 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
             await asyncio.sleep(0.5)
             if not env.has_food():
                 # print("All food eaten, simulation done")
-                fresh, runner = clone_creature_for_run(base, quantum)
-                env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
-                env.generate_food()
                 if not holder["auto_restart"]:
                     # print("stopping simulation")
                     sim_stop_event.set()
+                else:
+                    fresh, runner = clone_creature_for_run(base, quantum)
+                    env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
+                    env.generate_food()
                 holder["fitness"] = compute_fitness(env.player, env)
     except asyncio.CancelledError:
         return
