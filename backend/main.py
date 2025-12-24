@@ -254,8 +254,3 @@ async def ws_evolution(ws: WebSocket):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# TODO:
-# add css
-# host the site
-# maybe landing page and a "tutorial?"
