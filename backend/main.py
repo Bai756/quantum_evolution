@@ -8,6 +8,9 @@ from environment import Creature, Environment
 import web_helpers
 from classical_runner import weights_to_json
 from quantum_runner import serialize_circuit
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
 
 
 class CreatureSnapshot(BaseModel):
@@ -64,16 +67,27 @@ class EvolutionResult(BaseModel):
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:5173"
-]
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_methods=["*"],
-    allow_headers=["*"]
-)
+# Serve Vite assets
+app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
+
+# Serve React index.html
+@app.get("/")
+def serve_react():
+    return FileResponse(FRONTEND_DIST / "index.html")
+
+# origins = [
+#     "http://localhost:5173"
+# ]
+#
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_methods=["*"],
+#     allow_headers=["*"]
+# )
 
 
 @app.get("/creature", response_model=CreatureSnapshot)
