@@ -110,6 +110,7 @@ async def ws_evolution(ws: WebSocket):
         "fitness": 0.0,
         "generation": 0,
         "version": 0,
+        "auto_restart": False
     }
 
     sim_stop_event = asyncio.Event()
@@ -179,6 +180,7 @@ async def ws_evolution(ws: WebSocket):
             current_best["fitness"] = 0.0
             current_best["generation"] = 0
             current_best["version"] += 1
+            current_best["auto_restart"] = False
 
             # send initial best so frontend gets genome_text and optionally visualization
             await send_best(0, base, 0.0)
@@ -197,7 +199,8 @@ async def ws_evolution(ws: WebSocket):
         # regular evolution
         params = RunParams(**init_payload)
 
-        sim_task = asyncio.create_task(web_helpers.sim_loop(current_best, sim_stop_event, quantum, params.grid_size, params.vision_range, params.max_moves, params.wall_density, send_simulation_snapshot, auto_restart=True))
+        current_best["auto_restart"] = True
+        sim_task = asyncio.create_task(web_helpers.sim_loop(current_best, sim_stop_event, quantum, params.grid_size, params.vision_range, params.max_moves, params.wall_density, send_simulation_snapshot))
 
         best_fitness = float("-inf")
         best_final = None
@@ -235,6 +238,8 @@ async def ws_evolution(ws: WebSocket):
         current_best["fitness"] = final_fitness
         current_best["generation"] = final_gen
         current_best["version"] += 1
+
+        current_best["auto_restart"] = False
 
         # Send a final best
         await send_best(final_gen, final_creature, final_fitness)

@@ -74,7 +74,7 @@ def clone_creature_for_run(base, quantum):
     return fresh, runner
 
 
-async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_range, max_moves, wall_density, on_snapshot, auto_restart=False):
+async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_range, max_moves, wall_density, on_snapshot):
     last_version = -1
     env = None
     runner = None
@@ -118,7 +118,7 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
                 fresh, runner = clone_creature_for_run(base, quantum)
                 env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
                 env.generate_food()
-                if not auto_restart:
+                if not holder["auto_restart"]:
                     # print("stopping simulation")
                     sim_stop_event.set()
                 holder["fitness"] = compute_fitness(env.player, env)
@@ -131,7 +131,7 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
                 fresh, runner = clone_creature_for_run(base, quantum)
                 env = Environment(fresh, s=grid_size, max_energy=max_moves, wall_density=wall_density)
                 env.generate_food()
-                if not auto_restart:
+                if not holder["auto_restart"]:
                     # print("stopping simulation")
                     sim_stop_event.set()
                 holder["fitness"] = compute_fitness(env.player, env)
