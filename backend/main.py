@@ -67,17 +67,6 @@ class EvolutionResult(BaseModel):
 
 app = FastAPI()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
-
-# Serve Vite assets
-app.mount("/assets", StaticFiles(directory=FRONTEND_DIST / "assets"), name="assets")
-
-# Serve React index.html
-@app.get("/")
-def serve_react():
-    return FileResponse(FRONTEND_DIST / "index.html")
-
 # origins = [
 #     "http://localhost:5173"
 # ]
@@ -270,6 +259,11 @@ async def ws_evolution(ws: WebSocket):
         except Exception:
             pass
 
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
+
+app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
