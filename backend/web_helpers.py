@@ -56,6 +56,8 @@ async def evolution_classical_async(generations, children, chance, repeats, elit
 
         if gen % 1 == 0 or gen == generations - 1:
             yield gen, cand_with_fit[0][0], cand_with_fit[0][1]
+            # i can't believe i have to do this because it trains too fast
+            await asyncio.sleep(0.5)
 
         parents = [cand_with_fit[j][0] for j in range(min(elites, len(population)))]
 

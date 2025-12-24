@@ -1,37 +1,60 @@
-from tensorflow.keras import Sequential, layers
-from collections import Counter
+# from tensorflow.keras import Sequential, layers
 import numpy as np
 
 class ClassicalRunner:
     def __init__(self, weights=None):
-        self.model = Sequential([
-            layers.Input(shape=(3,)),
-            # layers.Dense(32, activation="relu"),
-            layers.Dense(32, activation="relu"),
-            layers.Dense(4, activation="linear"),
-        ])
+        # self.model = Sequential([
+        #     layers.Input(shape=(3,)),
+        #     # layers.Dense(32, activation="relu"),
+        #     layers.Dense(32, activation="relu"),
+        #     layers.Dense(4, activation="linear"),
+        # ])
+        #
+        # if weights:
+        #     self.model.set_weights(weights)
+        # else:
+        #     self._randomize_weights()
 
         if weights:
-            self.model.set_weights(weights)
+            self.weights = weights
         else:
-            self._randomize_weights()
+            self.weights = []
+            self.weights.append(np.random.uniform(-1, 1, (3, 32)))
+            self.weights.append(np.random.uniform(-1, 1, (32,)))
+            self.weights.append(np.random.uniform(-1, 1, (32, 16)))
+            self.weights.append(np.random.uniform(-1, 1, (16,)))
+            self.weights.append(np.random.uniform(-1, 1, (16, 4)))
+            self.weights.append(np.random.uniform(-1, 1, (4,)))
 
-    def _randomize_weights(self):
-        weights = []
-        for w in self.model.get_weights():
-            weights.append(
-                np.random.uniform(-1.0, 1.0, size=w.shape)
-            )
-        self.model.set_weights(weights)
+    # def _randomize_weights(self):
+    #     weights = []
+    #     for w in self.model.get_weights():
+    #         weights.append(
+    #             np.random.uniform(-1.0, 1.0, size=w.shape)
+    #         )
+    #     self.model.set_weights(weights)
+
+    # def get_action(self, vision):
+    #     x = np.asarray(vision, dtype=np.float32).reshape(1, -1)
+    #     probs = self.model(x, training=False).numpy()[0]
+    #
+    #     return int(np.argmax(probs))
 
     def get_action(self, vision):
-        x = np.asarray(vision, dtype=np.float32).reshape(1, -1)
-        probs = self.model(x, training=False).numpy()[0]
+        x = np.asarray(vision, dtype=np.float32)
 
-        return int(np.argmax(probs))
+        for i, w in enumerate(self.weights):
+            arr = np.asarray(w, dtype=np.float32)
+            if arr.ndim == 2:
+                x = x @ arr
+            elif arr.ndim == 1:
+                x = x + arr
+
+        return int(np.argmax(x))
 
     def get_weights(self):
-        return self.model.get_weights()
+        # return self.model.get_weights()
+        return self.weights
 
 def weights_to_json(weights):
     def r(x):
