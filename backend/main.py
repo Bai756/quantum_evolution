@@ -197,7 +197,7 @@ async def ws_evolution(ws: WebSocket):
         # regular evolution
         params = RunParams(**init_payload)
 
-        sim_task = asyncio.create_task(web_helpers.sim_loop(current_best, sim_stop_event, quantum, params.grid_size, params.vision_range, params.max_moves, params.wall_density, send_simulation_snapshot))
+        sim_task = asyncio.create_task(web_helpers.sim_loop(current_best, sim_stop_event, quantum, params.grid_size, params.vision_range, params.max_moves, params.wall_density, send_simulation_snapshot, auto_restart=True))
 
         best_fitness = float("-inf")
         best_final = None

@@ -74,7 +74,7 @@ def clone_creature_for_run(base, quantum):
     return fresh, runner
 
 
-async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_range, max_moves, wall_density, on_snapshot):
+async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_range, max_moves, wall_density, on_snapshot, auto_restart=False):
     last_version = -1
     env = None
     runner = None
@@ -91,7 +91,7 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
                 continue
 
             if holder.get("version") != last_version:
-                print("(re)starting simulation for gen", holder.get("generation"))
+                # print("(re)starting simulation for gen", holder.get("generation"))
                 last_version = holder.get("version")
 
                 base = holder["creature"]
@@ -114,16 +114,18 @@ async def sim_loop(current_best, sim_stop_event, quantum, grid_size, vision_rang
             await on_snapshot(env, holder)
 
             if env.player.energy <= 0:
-                print("No energy, simulation done")
-                sim_stop_event.set()
+                # print("No energy, simulation done")
+                if not auto_restart:
+                    sim_stop_event.set()
                 holder["fitness"] = compute_fitness(env.player, env)
                 await on_snapshot(env, holder)
                 continue
 
             await asyncio.sleep(0.5)
             if not env.has_food():
-                print("All food eaten, simulation done")
-                sim_stop_event.set()
+                # print("All food eaten, simulation done")
+                if not auto_restart:
+                    sim_stop_event.set()
                 holder["fitness"] = compute_fitness(env.player, env)
     except asyncio.CancelledError:
         return
