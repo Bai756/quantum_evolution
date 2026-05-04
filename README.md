@@ -78,7 +78,7 @@ These are just some things to keep in mind:
 - Since tensorflow is not supported on raspberry pi, I rewrote it using only numpy for a simple neural network implementation.
 - Please note that if you use high parameter values (e.g. large children number and large elites to return), it may take a really long time to complete.
 - The quantum runner uses a simple parameterized quantum circuit with rotation and entanglement gates. It uses the `qiskit` library for simulation.
-    - Now, I'm not going to explain quantum computing here, but if you're interested in learning more about it, here's the wiki page https://en.wikipedia.org/wiki/Quantum_computing. Read about qubits and operations.
+    - https://en.wikipedia.org/wiki/Quantum_computing. Read more here.
 - This grid environment is very simplified and the creature senses are also basic. Creatures only have vision that extend a certain number of cells forward, to the left, and to the right.
     - This means that often, the quantum circuit can perform better than the neural network because it inherently more randomly so it can explore the environment better.
     - I'm sure if the environment was more complex with more sensors, hazards, etc. the neural network would outperform the quantum circuit.
